@@ -4,18 +4,23 @@ class Testcase
 	class Builder
 		def self.new(name)
 			@@name = name
-			@@parameters = Array.new
+			@@all_parameters = Array.new
 		end
 
-		def self.add_parameters(values)
-			@@parameters.concat([values])
+		def self.add_parameters(parameters)
+			@@all_parameters.concat([parameters])
 		end
 
-		def self.create_testcase(&block)
-			testcase = Testcase.new(@@name, @@parameters, &block)
-			@@name = nil
-			@@parameters = nil
-			return testcase
+		def self.create_testcases(&block)
+			if @@all_parameters.size == 0
+				return [Testcase.new(@@name, nil, &block)]
+			else
+				testcases = Array.new
+				@@all_parameters.each do |parameters|
+					testcases << Testcase.new(@@name, parameters, &block)
+				end
+				return testcases
+			end
 		end
 	end
 
@@ -27,18 +32,24 @@ class Testcase
 	end
 
 	def execute
-		if @parameters.size != 0
-			@parameters.each do |parm|
-				puts "-- Running test #{@name} with parameters #{parm.inspect} --"
-				@code.call(parm)
-				puts "-- End of test #{@name} with parameters #{parm.inspect} --\n\n"
-			end
+		if @parameters
+			puts "-- Running test #{@name} with parameters #{@parameters} --"
+			@code.call(@parameters)
+			puts "-- End of test #{@name} with parameters #{@parameters} --\n\n"
 		else
 			puts "-- Running test #{@name} --"
 			@code.call
 			puts "-- End of test #{@name} --\n\n"
 		end
 	end
+
+	def to_xml
+		result = REXML::Element.new("testcase")
+		result.add(REXML::Element.new("name").text(@name))
+		
+	end
+
+	private
 
 	def log(message)
 		@output + "\n#{message}"

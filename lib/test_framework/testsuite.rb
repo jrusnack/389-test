@@ -1,5 +1,6 @@
 
 require "test_framework/testcase"
+require "rexml/element"
 
 class Testsuite
 
@@ -22,6 +23,7 @@ class Testsuite
 	end
 
 	def execute
+		puts @testcases.inspect
 		puts "=== Startup of #{name} ==="
 		@startup.call if @startup != nil
 		puts "=== Executing testcases ==="
@@ -30,13 +32,31 @@ class Testsuite
 		@cleanup.call if @cleanup != nil
 	end
 
+	def to_xml
+		result = REXML::Element.new("testsuite")
+		result.add(REXML::Element.new("name").text(@name))
+		if startup
+			result.add(@startup.to_xml)
+		end
+		@testcases.each do |testcase|
+			result.add(testcase.to_xml)
+		end
+		if cleanup
+			result.add(@cleanup.to_xml)
+		end
+		return result
+	end
+
 	private
 
 	def startup(&block)
-		@startup = block
+		@startup = Testcase.new("startup", nil, &block)
 	end
 
 	def testcase(name)
+		if name == "startup" || name == "cleanup"
+			raise ArgumentError.new("Invalid testcase name #{name}")
+		end
 		Testcase::Builder.new(name)
 	end
 
@@ -45,10 +65,10 @@ class Testsuite
 	end
 
 	def run(&block)
-		@testcases << Testcase::Builder.create_testcase(&block)
+		@testcases.concat(Testcase::Builder.create_testcases(&block))
 	end
 
 	def cleanup(&block)
-		@cleanup = block
+		@cleanup = Testcase.new("cleanup", nil, &block)
 	end
 end
