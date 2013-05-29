@@ -39,11 +39,11 @@ class Testcase
 	def execute
 		if @parameters
 			puts "-- Running test #{@name} with parameters #{@parameters} --"
-			@code.call(@parameters)
+			instance_exec(@parameters, &@code)
 			puts "-- End of test #{@name} with parameters #{@parameters} --\n\n"
 		else
 			puts "-- Running test #{@name} --"
-			@code.call
+			instance_exec(&@code)
 			puts "-- End of test #{@name} --\n\n"
 		end
 	end
@@ -51,6 +51,7 @@ class Testcase
 	def to_xml
 		xml = REXML::Element.new("testcase")
 		xml.add(REXML::Element.new("name").add_text(@name))
+		xml.add(REXML::Element.new("parameters").add_text(@parameters.inspect))
 		xml.add(REXML::Element.new("result").add_text(@result))
 		xml.add(REXML::Element.new("output").add_text(@output))
 		return xml
@@ -59,6 +60,6 @@ class Testcase
 	private
 
 	def log(message)
-		@output + "\n#{message}"
+		@output << "\n#{message}"
 	end
 end

@@ -12,7 +12,7 @@ testsuite "Basic" do
 		with 3, 4
 		with 5, 6
 		run do |parm1, parm2|
-			puts "I am first testcase running with parameters #{parm1}, #{parm2}"
+			log "I am first testcase running with parameters #{parm1}, #{parm2}"
 		end
 
 	testcase "tc02"
