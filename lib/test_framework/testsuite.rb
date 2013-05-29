@@ -23,28 +23,27 @@ class Testsuite
 	end
 
 	def execute
-		puts @testcases.inspect
-		puts "=== Startup of #{name} ==="
-		@startup.call if @startup != nil
+		puts "=== Startup of #{@name} ==="
+		@startup.execute if @startup != nil
 		puts "=== Executing testcases ==="
 		@testcases.each {|t| t.execute}
-		puts "=== Cleanup of #{name} ==="
-		@cleanup.call if @cleanup != nil
+		puts "=== Cleanup of #{@name} ==="
+		@cleanup.execute if @cleanup != nil
 	end
 
 	def to_xml
-		result = REXML::Element.new("testsuite")
-		result.add(REXML::Element.new("name").text(@name))
+		xml = REXML::Element.new("testsuite")
+		xml.add(REXML::Element.new("name").add_text(@name))
 		if startup
-			result.add(@startup.to_xml)
+			xml.add(@startup.to_xml)
 		end
 		@testcases.each do |testcase|
-			result.add(testcase.to_xml)
+			xml.add(testcase.to_xml)
 		end
 		if cleanup
-			result.add(@cleanup.to_xml)
+			xml.add(@cleanup.to_xml)
 		end
-		return result
+		return xml
 	end
 
 	private

@@ -1,13 +1,13 @@
 
 require "test_framework/dsl"
 
-testsuite Basic do
+testsuite "Basic" do
 
 	startup do
 		puts "starting up"
 	end
 
-	testcase tc01
+	testcase "tc01"
 		with 1, 2
 		with 3, 4
 		with 5, 6
@@ -15,7 +15,7 @@ testsuite Basic do
 			puts "I am first testcase running with parameters #{parm1}, #{parm2}"
 		end
 
-	testcase tc02
+	testcase "tc02"
 		run do
 			puts "I am second testcase"
 		end	

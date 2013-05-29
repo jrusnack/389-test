@@ -1,6 +1,10 @@
 
 class Testcase
 
+	UNKNOWN = "UNKNOWN"
+	PASS 	= "PASS"
+	FAIL	= "FAIL"
+
 	class Builder
 		def self.new(name)
 			@@name = name
@@ -29,6 +33,7 @@ class Testcase
 		@parameters = parameters
 		@code = block
 		@output = ""
+		@result = UNKNOWN
 	end
 
 	def execute
@@ -44,9 +49,11 @@ class Testcase
 	end
 
 	def to_xml
-		result = REXML::Element.new("testcase")
-		result.add(REXML::Element.new("name").text(@name))
-		
+		xml = REXML::Element.new("testcase")
+		xml.add(REXML::Element.new("name").add_text(@name))
+		xml.add(REXML::Element.new("result").add_text(@result))
+		xml.add(REXML::Element.new("output").add_text(@output))
+		return xml
 	end
 
 	private
