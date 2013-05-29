@@ -1,5 +1,5 @@
 
-require "test_framework/testsuite_builder"
+require "test_framework/testsuite"
 
 class Controller
 
@@ -9,7 +9,7 @@ class Controller
 
 	def add_testsuite(testsuite)
 		require testsuite
-		@testsuites << TestsuiteBuilder.create_testsuite
+		@testsuites << Testsuite::Builder.get_testsuite
 	end
 
 	def execute
