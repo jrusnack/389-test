@@ -74,6 +74,8 @@ class Testcase
 			error_xml.add_attribute('message', @error.message)
 			error_xml.add_text(REXML::CData.new(@output))
 			testcase_xml.add(error_xml)
+		elsif @result == UNKNOWN
+			testcase_xml.add(REXML::Element.new('skipped'))
 		end
 		return testcase_xml
 	end

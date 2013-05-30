@@ -7,7 +7,6 @@ testsuite "Basic" do
 	startup do
 		@directory_server = DirectoryServer.new
 		@directory_server.setup
-		result FAIL
 	end
 
 	testcase "tc01"
@@ -28,6 +27,5 @@ testsuite "Basic" do
 
 	cleanup do
 		@directory_server.remove
-		result PASS
 	end
 end

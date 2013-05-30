@@ -52,7 +52,7 @@ class Testsuite
 		begin
 			@current_testcase = testcase
 			log(testcase.header)
-			testcase.execute			
+			testcase.execute
 			testcase.result = Testcase::PASS
 			@passed << testcase
 			log(testcase.footer)
@@ -112,6 +112,7 @@ class Testsuite
 
 	def startup(&block)
 		@startup = Testcase.new("startup", @name, nil, &block)
+		@startup.result = Testcase::PASS 	# Passes by default
 	end
 
 	def testcase(testcase_name)
@@ -131,6 +132,7 @@ class Testsuite
 
 	def cleanup(&block)
 		@cleanup = Testcase.new("cleanup", @name, nil, &block)
+		@cleanup.result = Testcase::PASS 	# Passes by default
 	end
 
 	###########################
@@ -145,9 +147,5 @@ class Testsuite
 		if condition != true
 			raise Failure.new(message)
 		end
-	end
-
-	def result(result)
-		@current_testcase.result = result
 	end
 end
