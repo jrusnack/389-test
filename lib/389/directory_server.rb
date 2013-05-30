@@ -1,17 +1,16 @@
 
 
-require 'os'
-require 'ldap/ldap_server'
+require 'util/os'
+require 'ldap/ldapserver'
 
 class DirectoryServer < LdapServer
-    include OS
 
     def initialize(params={})
         
         # Set general options
         @fqdn    = params[:fqdn]     || OS.get_fqdn
-        @user    = params[:user]     || OS.get_current_user
-        @group   = params[:group]    || OS.get_current_user
+        @user    = params[:user]     || "nobody"
+        @group   = params[:group]    || "nobody"
 
         # Set instance options
         @default_backend    = params[:backend]  || "userRoot"
@@ -26,7 +25,7 @@ class DirectoryServer < LdapServer
 
         # Set root directory of instance, used later for starting/stopping the instance
         # $platform_64 bit global variable is set in Ldapclients module
-        if $platform_64bit then
+        if OS.is_64? then
             @iroot = "/usr/lib64/dirsrv/slapd-#{@name}"
         else
             @iroot = "/usr/lib/dirsrv/slapd-#{@name}"
@@ -129,13 +128,13 @@ class DirectoryServer < LdapServer
         return 0 if running?
 
         log_file = OS.get_tmp_file
-        if @port < 1024 then 
+        if @port < 1024 then
             `sudo #{@iroot}/start-slapd &> #{log_file}`
         else
              `#{@iroot}/start-slapd &> #{log_file}`
         end
         if ! $?.success? then
-            raise RuntimeError.new("Error occurred while starting instance. Return code: #{rc}. See #{log_file}")
+            raise RuntimeError.new("Error occurred while starting instance. Return code: ##{$?.exitstatus}. See #{log_file}")
         else
             File.delete(log_file)
             return 0
@@ -150,9 +149,8 @@ class DirectoryServer < LdapServer
 
         log_file = OS.get_tmp_file
         `#{@iroot}/stop-slapd &> #{log_file}`
-        rc = $?
-        if rc != 0 then
-            raise RuntimeError.new("Error occurred while stopping instance. Return code: #{rc}. See #{log_file}")
+        if ! $?.success? then
+            raise RuntimeError.new("Error occurred while stopping instance. Return code: #{$?.exitstatus}. See #{log_file}")
         else
             File.delete(log_file)
             return 0
