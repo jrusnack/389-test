@@ -23,33 +23,67 @@ class Testsuite
 	end
 
 	def execute
-		puts "=== Startup of #{@name} ==="
-		@startup.execute if @startup != nil
-		puts "=== Executing testcases ==="
-		@testcases.each do |testcase|
-			@current_testcase = testcase
-			testcase.execute
+		puts header
+		if @startup != nil
+			run_testcase(@startup)
+			if @startup.result == Testcase::FAIL
+				run_testcase(@cleanup)
+				puts footer
+				return
+			end
 		end
-		puts "=== Cleanup of #{@name} ==="
-		@cleanup.execute if @cleanup != nil
+
+		@testcases.each do |testcase|
+			run_testcase(testcase)
+		end
+
+		if @cleanup != nil
+			run_testcase(@cleanup)
+		end
+		puts footer
+	end
+
+	def run_testcase(testcase)
+		begin
+			@current_testcase = testcase
+			log(testcase.header)
+			testcase.execute
+			log(testcase.footer)
+			return true
+		rescue RuntimeError => error
+			testcase.result = Testcase::FAIL
+			log("#{error.class}: #{error.message}\n#{error.backtrace.join("\n")}")
+			return false
+		end
 	end
 
 	def to_xml
 		xml = REXML::Element.new("testsuite")
 		xml.add(REXML::Element.new("name").add_text(@name))
-		if startup
+		if @startup
 			xml.add(@startup.to_xml)
 		end
 		@testcases.each do |testcase|
 			xml.add(testcase.to_xml)
 		end
-		if cleanup
+		if @cleanup
 			xml.add(@cleanup.to_xml)
 		end
 		return xml
 	end
 
 	private
+
+	def header
+		"=== Testsuite #{@name} ==="
+	end
+
+	def footer
+		"=== End of #{@name} ==="
+	end
+
+	#########################################
+	# Functions for setting up the testcase #
 
 	def startup(&block)
 		@startup = Testcase.new("startup", nil, &block)
@@ -74,7 +108,24 @@ class Testsuite
 		@cleanup = Testcase.new("cleanup", nil, &block)
 	end
 
+	###########################
+	# Functions used in tests #
+
 	def log(message)
 		@current_testcase.output << "\n#{message}"
+		puts message
+	end
+
+	def assert(condition)
+		if condition
+			@current_testcase.result = Testcase::PASS if @current_testcase.result != Testcase::FAIL
+		else
+			@current_testcase.result = Testcase::FAIL
+			log("FAIL: \"#{condition}\" not TRUE")
+		end
+	end
+
+	def result(result)
+		@current_testcase.result = result
 	end
 end

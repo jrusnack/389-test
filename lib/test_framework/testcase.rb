@@ -42,13 +42,9 @@ class Testcase
 	# not testcase.
 	def execute
 		if @parameters
-			puts "-- Running test #{@name} with parameters #{@parameters} --"
 			@code.call(@parameters)
-			puts "-- End of test #{@name} with parameters #{@parameters} --\n\n"
 		else
-			puts "-- Running test #{@name} --"
 			@code.call
-			puts "-- End of test #{@name} --\n\n"
 		end
 	end
 
@@ -59,5 +55,23 @@ class Testcase
 		xml.add(REXML::Element.new("result").add_text(@result))
 		xml.add(REXML::Element.new("output").add_text(REXML::CData.new(@output)))
 		return xml
+	end
+
+	def header
+		if @parameters
+			return "-- Running test #{@name} with parameters #{@parameters} --\n"
+		else
+			return "-- Running test #{@name} --\n"
+		end
+	end
+
+	def footer
+		if @parameters
+			return "-- End of test #{@name} with parameters #{@parameters} --\n" + \
+				   "-- Result: #{@result} --\n\n"
+		else
+			return "-- End of test #{@name} --\n" + \
+			       "-- Result: #{@result} --\n\n"
+		end
 	end
 end
