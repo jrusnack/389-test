@@ -5,6 +5,7 @@ testsuite "Basic" do
 
 	startup do
 		puts "starting up"
+		@ds = "My DS"
 	end
 
 	testcase "tc01"
@@ -13,6 +14,7 @@ testsuite "Basic" do
 		with 5, 6
 		run do |parm1, parm2|
 			log "I am first testcase running with parameters #{parm1}, #{parm2}"
+			log "ds = #{@ds}"
 		end
 
 	testcase "tc02"

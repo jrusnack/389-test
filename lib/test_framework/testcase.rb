@@ -1,6 +1,8 @@
 
 class Testcase
 
+	attr_accessor :output, :result
+
 	UNKNOWN = "UNKNOWN"
 	PASS 	= "PASS"
 	FAIL	= "FAIL"
@@ -28,22 +30,24 @@ class Testcase
 		end
 	end
 
-	def initialize(name, parameters, &block)
+	def initialize(name, parameters, &code)
 		@name = name
 		@parameters = parameters
-		@code = block
+		@code = code
 		@output = ""
 		@result = UNKNOWN
 	end
 
+	# Executes the associated code, which will run within the context of caller,
+	# not testcase.
 	def execute
 		if @parameters
 			puts "-- Running test #{@name} with parameters #{@parameters} --"
-			instance_exec(@parameters, &@code)
+			@code.call(@parameters)
 			puts "-- End of test #{@name} with parameters #{@parameters} --\n\n"
 		else
 			puts "-- Running test #{@name} --"
-			instance_exec(&@code)
+			@code.call
 			puts "-- End of test #{@name} --\n\n"
 		end
 	end
@@ -55,11 +59,5 @@ class Testcase
 		xml.add(REXML::Element.new("result").add_text(@result))
 		xml.add(REXML::Element.new("output").add_text(@output))
 		return xml
-	end
-
-	private
-
-	def log(message)
-		@output << "\n#{message}"
 	end
 end

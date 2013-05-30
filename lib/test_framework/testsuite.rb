@@ -26,7 +26,10 @@ class Testsuite
 		puts "=== Startup of #{@name} ==="
 		@startup.execute if @startup != nil
 		puts "=== Executing testcases ==="
-		@testcases.each {|t| t.execute}
+		@testcases.each do |testcase|
+			@current_testcase = testcase
+			testcase.execute
+		end
 		puts "=== Cleanup of #{@name} ==="
 		@cleanup.execute if @cleanup != nil
 	end
@@ -69,5 +72,9 @@ class Testsuite
 
 	def cleanup(&block)
 		@cleanup = Testcase.new("cleanup", nil, &block)
+	end
+
+	def log(message)
+		@current_testcase.output << "\n#{message}"
 	end
 end
