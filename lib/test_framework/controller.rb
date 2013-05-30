@@ -25,8 +25,6 @@ class Controller
 	end
 
 	def write_report(filepath)
-		report_file = File.open(filepath,'w')
-		@report.write(report_file, 4)
-		report_file.close
+		File.open(filepath, 'w') {|file| @report.write(file, 4)}
 	end
 end

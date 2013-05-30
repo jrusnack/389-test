@@ -57,7 +57,7 @@ class Testcase
 		xml.add(REXML::Element.new("name").add_text(@name))
 		xml.add(REXML::Element.new("parameters").add_text(@parameters.inspect))
 		xml.add(REXML::Element.new("result").add_text(@result))
-		xml.add(REXML::Element.new("output").add_text(@output))
+		xml.add(REXML::Element.new("output").add_text(REXML::CData.new(@output)))
 		return xml
 	end
 end
