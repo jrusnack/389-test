@@ -17,13 +17,13 @@ testsuite "Basic" do
 		run do |parm1, parm2|
 			log "I am first testcase running with parameters #{parm1}, #{parm2}"
 			@directory_server.start
-			assert @directory_server.running?
+			assert("DS should be running.", @directory_server.running?)
 		end
 
 	testcase "tc02"
 		run do
 			@directory_server.stop
-			assert @directory_server.running?
+			assert("DS should be running.", @directory_server.running?)
 		end	
 
 	cleanup do

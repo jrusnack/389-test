@@ -52,33 +52,49 @@ class Testsuite
 		begin
 			@current_testcase = testcase
 			log(testcase.header)
-			testcase.execute
-			log(testcase.footer)
+			testcase.execute			
 			testcase.result = Testcase::PASS
 			@passed << testcase
+			log(testcase.footer)
 			return true
 		rescue RuntimeError, Failure => error
 			testcase.result = Testcase::FAIL
 			testcase.error = error
 			@failed << testcase
 			log("#{error.class}: #{error.message}\n#{error.backtrace.join("\n")}")
+			log(testcase.footer)
 			return false
 		end
 	end
 
 	def to_xml
-		xml = REXML::Element.new("testsuite")
-		xml.add(REXML::Element.new("name").add_text(@name))
+		testsuite_xml = REXML::Element.new("testsuite")
+		testsuite_xml.add(REXML::Element.new("name").add_text(@name))
 		if @startup
-			xml.add(@startup.to_xml)
+			testsuite_xml.add(@startup.to_xml)
 		end
 		@testcases.each do |testcase|
-			xml.add(testcase.to_xml)
+			testsuite_xml.add(testcase.to_xml)
 		end
 		if @cleanup
-			xml.add(@cleanup.to_xml)
+			testsuite_xml.add(@cleanup.to_xml)
 		end
-		return xml
+		return testsuite_xml
+	end
+
+	def to_junit_xml
+		testsuite_xml = REXML::Element.new("testsuite")
+		testsuite_xml.add_attribute('name', @name)
+		if @startup
+			testsuite_xml.add(@startup.to_junit_xml)
+		end
+		@testcases.each do |testcase|
+			testsuite_xml.add(testcase.to_junit_xml)
+		end
+		if @cleanup
+			testsuite_xml.add(@cleanup.to_junit_xml)
+		end
+		return testsuite_xml
 	end
 
 	private
@@ -95,14 +111,14 @@ class Testsuite
 	# Functions for setting up the testcase #
 
 	def startup(&block)
-		@startup = Testcase.new("startup", nil, &block)
+		@startup = Testcase.new("startup", @name, nil, &block)
 	end
 
-	def testcase(name)
-		if name == "startup" || name == "cleanup"
+	def testcase(testcase_name)
+		if testcase_name == "startup" || testcase_name == "cleanup"
 			raise ArgumentError.new("Invalid testcase name #{name}")
 		end
-		Testcase::Builder.new(name)
+		Testcase::Builder.new(testcase_name, @name)
 	end
 
 	def with(*parameters)
@@ -114,7 +130,7 @@ class Testsuite
 	end
 
 	def cleanup(&block)
-		@cleanup = Testcase.new("cleanup", nil, &block)
+		@cleanup = Testcase.new("cleanup", @name, nil, &block)
 	end
 
 	###########################
