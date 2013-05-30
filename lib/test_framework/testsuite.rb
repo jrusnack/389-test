@@ -1,5 +1,6 @@
 
 require "test_framework/testcase"
+require "test_framework/failure"
 require "rexml/element"
 
 class Testsuite
@@ -20,6 +21,9 @@ class Testsuite
 		@testcases = Array.new
 		@startup = nil
 		@cleanup = nil
+		@passed = Array.new
+		@failed = Array.new
+		@skipped = Array.new
 	end
 
 	def execute
@@ -27,6 +31,7 @@ class Testsuite
 		if @startup != nil
 			run_testcase(@startup)
 			if @startup.result == Testcase::FAIL
+				@skipped.concat(@testcases)
 				run_testcase(@cleanup)
 				puts footer
 				return
@@ -49,9 +54,13 @@ class Testsuite
 			log(testcase.header)
 			testcase.execute
 			log(testcase.footer)
+			testcase.result = Testcase::PASS
+			@passed << testcase
 			return true
-		rescue RuntimeError => error
+		rescue RuntimeError, Failure => error
 			testcase.result = Testcase::FAIL
+			testcase.error = error
+			@failed << testcase
 			log("#{error.class}: #{error.message}\n#{error.backtrace.join("\n")}")
 			return false
 		end
@@ -116,12 +125,9 @@ class Testsuite
 		puts message
 	end
 
-	def assert(condition)
-		if condition
-			@current_testcase.result = Testcase::PASS if @current_testcase.result != Testcase::FAIL
-		else
-			@current_testcase.result = Testcase::FAIL
-			log("FAIL: \"#{condition}\" not TRUE")
+	def assert(message, condition)
+		if condition != true
+			raise Failure.new(message)
 		end
 	end
 
