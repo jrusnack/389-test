@@ -1,7 +1,8 @@
 
 
-require 'util/os'
 require 'ldap/ldapserver'
+require 'util/os'
+require 'util/log'
 
 class DirectoryServer < LdapServer
 
@@ -58,66 +59,36 @@ class DirectoryServer < LdapServer
         EOF
 
         config_file = OS.get_tmp_file
-        log_file    = OS.get_tmp_file
         File.open(config_file, "w+") {|file| file.write(config)}
 
-        `sudo setup-ds.pl -s -f #{config_file} &> #{log_file}`
-        File.delete(config_file)
+        log `sudo setup-ds.pl -s -f #{config_file} 2>&1`        
 
         if ! $?.success? then
-            # Error occurred, find out what is the problem and raise Error with nice message
-            log = File.open(log_file,"r").read
-
-            case
-            when log.index("command not found") != nil
-                File.delete(log_file)
-                raise RuntimeError.new("Cannot find commang setup-ds.pl. Make sure Directory Server packages are installed.")
-
-            when log.index("Error: the server already exists") != nil
-                File.delete(log_file)
-                raise RuntimeError.new("Instance named #{@name} already exists. Remove it first or use different instance name.")
-
-            when log.index("The port number \'#{@port}\' is not available for use.") != nil
-                File.delete(log_file)
-                raise RuntimeError.new("Port #{@port} is not available for use - may be invalid, already used or restricted.")
-            
-            else
-                raise RuntimeError.new("Failed to create new instance due to unknown error. Return code: #{rc}. See #{log_file}")
-            end
+            raise RuntimeError.new("Failed to create new instance. Return code: #{$?.exitstatus}")
         else
-            # Success
             @live = true
-            return 0
         end
     end
 
     # Executes remove-ds.pl script on instance.
     def remove
-        log_file = OS.get_tmp_file
-        `sudo remove-ds.pl -i slapd-#{@name} &> #{log_file}`
+        log `sudo remove-ds.pl -i slapd-#{@name} 2>&1`
         if ! $?.success?
-            # Error occurred
-            raise RuntimeError.new("Error occurred while removing instance. Return code: #{rc}. See #{log_file}")
+            raise RuntimeError.new("Error occurred while removing instance. Return code: #{$?.exitstatus}")
         else
-            File.delete(log_file)
             @live = false
-            return 0
         end
     end
 
     def restart
         raise RuntimeError.new("Directory server has not been set up. Run \"setup\" method first.") if !@live
-        log_file = OS.get_tmp_file
         if @port < 1024 then
-            `sudo #{@iroot}/restart-slapd &> #{log_file}`
+            log `sudo #{@iroot}/restart-slapd 2>&1`
         else
-            `#{@iroot}/restart-slapd &> #{log_file}`
+            log `#{@iroot}/restart-slapd 2>&1`
         end
-        if !running? then
-            raise RuntimeError.new("Error occurred while restarting instance. Server is not running.")
-        else
-            File.delete(log_file)
-            return 0
+        if ! $?.success? then
+            raise RuntimeError.new("Error occurred while restarting instance. Return code: #{$?.exitstatus}")
         end
     end
 
@@ -125,19 +96,15 @@ class DirectoryServer < LdapServer
         raise RuntimeError.new("Directory server has not been set up. Run \"setup\" method first.") if !@live
 
         # Don`t start if server is already running
-        return 0 if running?
+        return if running?
 
-        log_file = OS.get_tmp_file
         if @port < 1024 then
-            `sudo #{@iroot}/start-slapd &> #{log_file}`
+            log `sudo #{@iroot}/start-slapd 2>&1`
         else
-             `#{@iroot}/start-slapd &> #{log_file}`
+            log `#{@iroot}/start-slapd 2>&1`
         end
         if ! $?.success? then
-            raise RuntimeError.new("Error occurred while starting instance. Return code: ##{$?.exitstatus}. See #{log_file}")
-        else
-            File.delete(log_file)
-            return 0
+            raise RuntimeError.new("Error occurred while starting instance. Return code: #{$?.exitstatus}")
         end
     end
 
@@ -145,15 +112,11 @@ class DirectoryServer < LdapServer
         raise RuntimeError.new("Directory server has not been set up. Run \"setup\" method first.") if !@live
 
         # Don`t stop if server is already stopped
-        return 0 if !running?
+        return if !running?
 
-        log_file = OS.get_tmp_file
-        `#{@iroot}/stop-slapd &> #{log_file}`
+        log `#{@iroot}/stop-slapd &> #{log_file}`
         if ! $?.success? then
-            raise RuntimeError.new("Error occurred while stopping instance. Return code: #{$?.exitstatus}. See #{log_file}")
-        else
-            File.delete(log_file)
-            return 0
+            raise RuntimeError.new("Error occurred while stopping instance. Return code: #{$?.exitstatus}")
         end
     end
 

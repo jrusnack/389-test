@@ -2,8 +2,10 @@
 require "test_framework/testcase"
 require "test_framework/failure"
 require "rexml/element"
+require 'util/log'
 
 class Testsuite
+	attr_reader :name, :passed, :failed, :skipped
 
 	class Builder
 		def self.build(name, &block)
@@ -26,14 +28,15 @@ class Testsuite
 		@skipped = Array.new
 	end
 
-	def execute
-		puts header
+	def execute(output_file = nil)
+		Log.logfile = output_file
+		log(header)
 		if @startup != nil
 			run_testcase(@startup)
 			if @startup.result == Testcase::FAIL
 				@skipped.concat(@testcases)
-				run_testcase(@cleanup)
-				puts footer
+				run_testcase(@cleanup) if @cleanup != nil
+				log(footer)
 				return
 			end
 		end
@@ -45,12 +48,12 @@ class Testsuite
 		if @cleanup != nil
 			run_testcase(@cleanup)
 		end
-		puts footer
+		log(footer)
 	end
 
 	def run_testcase(testcase)
 		begin
-			@current_testcase = testcase
+			Log::testcase = testcase
 			log(testcase.header)
 			testcase.execute
 			testcase.result = Testcase::PASS
@@ -61,7 +64,7 @@ class Testsuite
 			testcase.result = Testcase::FAIL
 			testcase.error = error
 			@failed << testcase
-			log("#{error.class}: #{error.message}\n#{error.backtrace.join("\n")}")
+			log_error(error)
 			log(testcase.footer)
 			return false
 		end
@@ -137,11 +140,6 @@ class Testsuite
 
 	###########################
 	# Functions used in tests #
-
-	def log(message)
-		@current_testcase.output << "\n#{message}"
-		puts message
-	end
 
 	def assert(message, condition)
 		if condition != true

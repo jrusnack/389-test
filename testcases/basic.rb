@@ -23,7 +23,7 @@ testsuite "Basic" do
 		run do
 			@directory_server.stop
 			assert("DS should be running.", @directory_server.running?)
-		end	
+		end
 
 	cleanup do
 		@directory_server.remove

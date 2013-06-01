@@ -44,11 +44,7 @@ class Testcase
 	# Executes the associated code, which will run within the context of caller,
 	# not testcase.
 	def execute
-		if @parameters
-			@code.call(@parameters)
-		else
-			@code.call
-		end
+		@parameters ? @code.call(@parameters) : @code.call
 	end
 
 	def to_xml

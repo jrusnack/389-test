@@ -16,9 +16,10 @@ class Controller
 		@testsuites << Testsuite::Builder.get_testsuite
 	end
 
-	def execute
+	def execute(output_dir)
 		@testsuites.each do |testsuite|
-			testsuite.execute
+			output_file = output_dir ? output_dir + "/#{testsuite.name}" : nil
+			testsuite.execute(output_file)
 		end
 	end
 
