@@ -9,7 +9,7 @@ $:.unshift File.expand_path("../../lib", Pathname.new(__FILE__).realpath)
 require "test_framework/controller.rb"
 
 output_dir = "/home/jrusnack/389-test/output"
-FileUtils.mkdir_p(output_dir) unless Dir.exists?(output_dir)
+FileUtils.mkdir_p(output_dir) unless File.exist?(output_dir)
 controller = Controller.new
 controller.add_testsuite("/home/jrusnack/389-test/testcases/basic")
 controller.execute(output_dir)
