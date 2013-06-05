@@ -15,7 +15,6 @@ class Log
 	def self.info(message)
 		prefix = "[#{Time.now.strftime("%T.%L")}] "
 		output = message.lines.to_a.map!{|line| line = prefix + line}.join("")
-		puts output
 		File.open(@@logfile,'a') do |logfile|
 			logfile.write(output)
 		end if @@logfile
@@ -25,7 +24,6 @@ class Log
 	def self.error(error)
 		prefix = "[#{Time.now.strftime("%T.%L")}]"
 		output = "#{prefix}[ERROR] #{error.message}\n#{error.backtrace.join("\n")}"
-		puts output
 		File.open(@@logfile,'a') do |logfile|
 			logfile.write(output)
 		end if @@logfile

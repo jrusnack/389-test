@@ -1,0 +1,14 @@
+#!/usr/bin/env ruby
+
+require 'pathname'
+
+# add self to libpath
+$:.unshift File.expand_path("../../lib", Pathname.new(__FILE__).realpath)
+
+require "test_framework/controller.rb"
+
+controller = Controller.new
+controller.add_testsuite("/home/jrusnack/389-test/testcases/basic")
+controller.execute("/home/jrusnack/389-test/output")
+controller.write_xml_report("/home/jrusnack/389-test/output")
+controller.write_junit_report("/home/jrusnack/389-test/output")
