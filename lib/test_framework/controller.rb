@@ -6,18 +6,19 @@ require "rexml/element"
 
 class Controller
 
-	def initialize
+	def initialize(configuration)
+		@configuration = configuration
 		@testsuites = Array.new
-	end
+		# fill the testsuites array with Testsuites according to configuration
+		@testsuites_paths = TestsuiteExplorer.get_testsuites_paths(@configuration)
+		@testsuites_paths.each do |testsuite_path|
+			add_testsuite(testsuite_path)
+		end
+	end	
 
-	def add_testsuite(testsuite)
-		require testsuite
-		@testsuites << Testsuite::Builder.get_testsuite
-	end
-
-	def execute(output_dir=nil)
+	def execute
 		@testsuites.each do |testsuite|
-			output_file = output_dir ? output_dir + "/#{testsuite.name}" : nil
+			output_file = @configuration.output_directory + "/#{testsuite.name}"
 			testsuite.execute(output_file)
 		end
 	end
@@ -38,5 +39,12 @@ class Controller
 			@junit_report.add(testsuite.to_junit_xml)
 		end
 		File.open(output_file, 'w') {|file| @junit_report.write(file, 4)}
+	end
+
+	private
+
+	def add_testsuite(testsuite)
+		require testsuite
+		@testsuites << Testsuite::Builder.get_testsuite
 	end
 end

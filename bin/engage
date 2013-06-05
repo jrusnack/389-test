@@ -7,11 +7,11 @@ require 'fileutils'
 $:.unshift File.expand_path("../../lib", Pathname.new(__FILE__).realpath)
 
 require "test_framework/controller.rb"
+require 'test_framework/configuration'
 
-output_dir = "/home/jrusnack/389-test/output"
-FileUtils.mkdir_p(output_dir) unless File.exist?(output_dir)
-controller = Controller.new
-controller.add_testsuite("/home/jrusnack/389-test/testcases/basic")
-controller.execute(output_dir)
-controller.write_xml_report(output_dir + "/results.xml")
-controller.write_junit_report(output_dir + "/junit.xml")
+config = Configuration.new()
+FileUtils.mkdir_p(config.output_directory) unless File.exist?(config.output_directory)
+controller = Controller.new(config)
+controller.execute
+controller.write_xml_report(config.output_directory + "/results.xml")
+controller.write_junit_report(config.output_directory + "/junit.xml")
