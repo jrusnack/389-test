@@ -1,14 +1,17 @@
 #!/usr/bin/env ruby
 
 require 'pathname'
+require 'fileutils'
 
 # add self to libpath
 $:.unshift File.expand_path("../../lib", Pathname.new(__FILE__).realpath)
 
 require "test_framework/controller.rb"
 
+output_dir = "/home/jrusnack/389-test/output"
+FileUtils.mkdir_p(output_dir) unless Dir.exists?(output_dir)
 controller = Controller.new
 controller.add_testsuite("/home/jrusnack/389-test/testcases/basic")
-controller.execute("/home/jrusnack/389-test/output")
-controller.write_xml_report("/home/jrusnack/389-test/output")
-controller.write_junit_report("/home/jrusnack/389-test/output")
+controller.execute(output_dir)
+controller.write_xml_report(output_dir + "/results.xml")
+controller.write_junit_report(output_dir + "/junit.xml")
