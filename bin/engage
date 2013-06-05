@@ -6,11 +6,13 @@ require 'fileutils'
 # add self to libpath
 $:.unshift File.expand_path("../../lib", Pathname.new(__FILE__).realpath)
 
-require "test_framework/controller.rb"
+require 'test_framework/controller.rb'
 require 'test_framework/configuration'
+require 'test_framework/environment'
 
-config = Configuration.new()
-FileUtils.mkdir_p(config.output_directory) unless File.exist?(config.output_directory)
+config = Configuration.new
+Environment.prepare(config)
+Environment.check_environment(config)
 controller = Controller.new(config)
 controller.execute
 controller.write_xml_report(config.output_directory + "/results.xml")

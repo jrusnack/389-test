@@ -59,6 +59,7 @@ class Testsuite
 			testcase.result = Testcase::PASS
 			@passed << testcase
 			log(testcase.footer)
+			Log::testcase = nil
 			return true
 		rescue RuntimeError, Failure => error
 			testcase.result = Testcase::FAIL
