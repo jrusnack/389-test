@@ -14,7 +14,7 @@ module Environment
 	end
 
 	def self.prepare(configuration)
-		# create output directory if it does not exist
+		# create output directory for reports if it does not exist
 		FileUtils.mkdir_p(configuration.output_directory) unless File.exist?(configuration.output_directory)
 	end
 end

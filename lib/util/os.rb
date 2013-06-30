@@ -36,4 +36,9 @@ module OS
         return `mktemp`.chomp!
     end
 
+    # Executes command in shell
+    def self.sh(command)
+        Log.info(`#{command} 2>&1`.chomp!, "SH")
+    end
+
 end

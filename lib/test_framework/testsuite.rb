@@ -104,11 +104,11 @@ class Testsuite
 	private
 
 	def header
-		"=== Testsuite #{@name} ==="
+		"#"*20 + " Testsuite #{@name} " + "#"*20
 	end
 
 	def footer
-		"=== End of #{@name} ==="
+		"\n" + "#"*20 + " End of #{@name} " + "#"*20
 	end
 
 	#########################################
@@ -143,7 +143,9 @@ class Testsuite
 	# Functions used in tests #
 
 	def assert(message, condition)
-		if condition != true
+		if condition == true
+			Log.info(message, "PASS")
+		else
 			raise Failure.new(message)
 		end
 	end

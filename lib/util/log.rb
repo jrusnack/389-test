@@ -12,28 +12,33 @@ class Log
 		@@logfile = logfile
 	end
 
-	def self.info(message)
+	def self.info(message, tag)
+		return if message == nil
 		prefix = "[#{Time.now.strftime("%T.%L")}] "
-		output = message.lines.to_a.map!{|line| line = prefix + line}.join("")
+		tag = tag != nil ? "[#{tag}] " : ""
+		output = message.chomp.lines.to_a.map!{|line| line = prefix + tag + line}.join("") + "\n"
 		File.open(@@logfile,'a') do |logfile|
 			logfile.write(output)
 		end if @@logfile
 		@@testcase.output << output if @@testcase
+		return message
 	end
 
 	def self.error(error)
 		prefix = "[#{Time.now.strftime("%T.%L")}]"
-		output = "#{prefix}[ERROR] #{error.message}\n#{error.backtrace.join("\n")}"
-		File.open(@@logfile,'a') do |logfile|
-			logfile.write(output)
-		end if @@logfile
-		@@testcase.output << output if @@testcase
+		if error.kind_of?(Failure) then
+			info(error.message, "FAIL")
+			info(error.backtrace[0], "FAIL")
+		else
+			info(error.message, "ERROR")
+			info(error.backtrace[0], "ERROR")
+		end
 	end
 
 end
 
 def log(message)
-	Log.info(message)
+	Log.info(message, nil)
 end
 
 def log_error(error)

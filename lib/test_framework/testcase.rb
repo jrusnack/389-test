@@ -78,19 +78,13 @@ class Testcase
 
 	def header
 		if @parameters
-			return "-- Running test #{@name} with parameters #{@parameters} --\n"
+			return "\n" + ":"*65 + "\n#{@name} with parameters #{@parameters}\n" + ":"*65
 		else
-			return "-- Running test #{@name} --\n"
+			return "\n" + ":"*65 + "\n#{@name}\n" + ":"*65
 		end
 	end
 
 	def footer
-		if @parameters
-			return "-- End of test #{@name} with parameters #{@parameters} --\n" + \
-				   "-- Result: #{@result} --\n\n"
-		else
-			return "-- End of test #{@name} --\n" + \
-			       "-- Result: #{@result} --\n\n"
-		end
+		return "RESULT: #{@result}"
 	end
 end

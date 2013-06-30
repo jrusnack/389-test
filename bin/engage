@@ -6,7 +6,7 @@ require 'fileutils'
 # add self to libpath
 $:.unshift File.expand_path("../../lib", Pathname.new(__FILE__).realpath)
 
-require 'test_framework/controller.rb'
+require 'test_framework/controller'
 require 'test_framework/configuration'
 require 'test_framework/environment'
 

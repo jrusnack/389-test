@@ -61,8 +61,8 @@ class DirectoryServer < LdapServer
         config_file = OS.get_tmp_file
         File.open(config_file, "w+") {|file| file.write(config)}
 
-        log `sudo setup-ds.pl -s -f #{config_file} 2>&1`        
-
+        OS.sh "sudo setup-ds.pl -s -f #{config_file}"
+        
         if ! $?.success? then
             raise RuntimeError.new("Failed to create new instance. Return code: #{$?.exitstatus}")
         else
@@ -72,7 +72,7 @@ class DirectoryServer < LdapServer
 
     # Executes remove-ds.pl script on instance.
     def remove
-        log `sudo remove-ds.pl -i slapd-#{@name} 2>&1`
+        OS.sh "sudo remove-ds.pl -i slapd-#{@name}"
         if ! $?.success?
             raise RuntimeError.new("Error occurred while removing instance. Return code: #{$?.exitstatus}")
         else
@@ -82,11 +82,7 @@ class DirectoryServer < LdapServer
 
     def restart
         raise RuntimeError.new("Directory server has not been set up. Run \"setup\" method first.") if !@live
-        if @port < 1024 then
-            log `sudo #{@iroot}/restart-slapd 2>&1`
-        else
-            log `#{@iroot}/restart-slapd 2>&1`
-        end
+        OS.sh "sudo #{@iroot}/restart-slapd"
         if ! $?.success? then
             raise RuntimeError.new("Error occurred while restarting instance. Return code: #{$?.exitstatus}")
         end
@@ -98,11 +94,7 @@ class DirectoryServer < LdapServer
         # Don`t start if server is already running
         return if running?
 
-        if @port < 1024 then
-            log `sudo #{@iroot}/start-slapd 2>&1`
-        else
-            log `#{@iroot}/start-slapd 2>&1`
-        end
+        OS.sh "sudo #{@iroot}/start-slapd"
         if ! $?.success? then
             raise RuntimeError.new("Error occurred while starting instance. Return code: #{$?.exitstatus}")
         end
@@ -114,14 +106,14 @@ class DirectoryServer < LdapServer
         # Don`t stop if server is already stopped
         return if !running?
 
-        log `#{@iroot}/stop-slapd &> #{log_file}`
+        OS.sh "sudo #{@iroot}/stop-slapd"
         if ! $?.success? then
             raise RuntimeError.new("Error occurred while stopping instance. Return code: #{$?.exitstatus}")
         end
     end
 
     def running?
-        if `service dirsrv status #{@name}`.index("is running") != nil then
+        if OS.sh("sudo service dirsrv status #{@name}").index("is running") then
             return true
         else
             return false
