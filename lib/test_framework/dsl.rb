@@ -6,5 +6,5 @@ FAIL = Testcase::FAIL
 UNKNOWN = Testcase::UNKNOWN
 
 def testsuite(name, &block)	
-	Testsuite::Builder.build(name, &block)
+	Testsuite::Builder.init(name, &block)
 end

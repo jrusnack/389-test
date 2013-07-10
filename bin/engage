@@ -12,5 +12,4 @@ require 'test_framework/configuration'
 config = Configuration.new
 controller = Controller.new(config)
 controller.execute
-controller.write_xml_report(config.output_directory + "/results.xml")
-controller.write_junit_report(config.output_directory + "/junit.xml")
+controller.write_reports

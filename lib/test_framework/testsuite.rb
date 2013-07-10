@@ -3,23 +3,35 @@ require "test_framework/testcase"
 require "test_framework/failure"
 require "rexml/element"
 require 'util/log'
+require 'util/os'
 
 class Testsuite
+	include LogMixin
+	include OS
 	attr_reader :name, :passed, :failed, :skipped
 
 	class Builder
-		def self.build(name, &block)
-			@@testsuite = Testsuite.new(name)
-			@@testsuite.instance_eval(&block)
+
+		def self.init(name, &block)
+			@@name = name
+			@@block = block
 		end
 
-		def self.get_testsuite
-			@@testsuite
+		def self.get_testsuite(log)
+			testsuite = Testsuite.new(name, log)
+			# Probably the ugliest thing ..
+			testsuite.instance_eval(&@@block)
+			return testsuite
+		end
+
+		def self.name
+			@@name
 		end
 	end
 
-	def initialize(name)
+	def initialize(name, log)
 		@name = name
+		@log = log
 		@testcases = Array.new
 		@startup = nil
 		@cleanup = nil
@@ -28,49 +40,44 @@ class Testsuite
 		@skipped = Array.new
 	end
 
-	def execute(configuration, output_directory)
-		execute_startup(configuration, output_directory)
+	def execute
+		execute_startup
 		execute_testcases
 		execute_cleanup
 	end
 
-	def execute_startup(configuration, output_directory)
-		@configuration = configuration
-		Log.logfile = output_directory + "/#{@name}"
+	def execute_startup
 		log(testsuite_header)
-		if @startup != nil
-			run_testcase(@startup)
-			if @startup.result == Testcase::FAIL
-				@skipped.concat(@testcases)
-				run_testcase(@cleanup) if @cleanup != nil
-				log(testsuite_footer)
-				return
-			end
-		end
+		run_testcase(@startup) if @startup != nil
 	end
 
 	def execute_testcases
+		# skip all if startup failed
+		if @startup.result == Testcase::FAIL
+			@skipped.concat(@testcases)
+			return
+		end
+
 		@testcases.each do |testcase|
 			run_testcase(testcase)
 		end
 	end
 
 	def execute_cleanup
-		if @cleanup != nil
-			run_testcase(@cleanup)
-		end
+		run_testcase(@cleanup) if @cleanup != nil
 		log(testsuite_footer)
 	end
 
 	def run_testcase(testcase)
 		begin
-			Log::testcase = testcase
+			@log.testcase = testcase
 			log(testcase.header)
 			testcase.execute
+			# if no exception was raised, testcase passed
 			testcase.result = Testcase::PASS
 			@passed << testcase
 			log(testcase.footer)
-			Log::testcase = nil
+			@log.testcase = nil
 			return true
 		rescue RuntimeError, Failure => error
 			testcase.result = Testcase::FAIL
@@ -155,7 +162,7 @@ class Testsuite
 
 	def assert(message, condition)
 		if condition == true
-			Log.info(message, "PASS")
+			@log.info(message, "PASS")
 		else
 			raise Failure.new(message)
 		end

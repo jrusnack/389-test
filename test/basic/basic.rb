@@ -5,7 +5,7 @@ require "389/directory_server"
 testsuite "basic" do
 
 	startup do
-		@directory_server = DirectoryServer.new
+		@directory_server = DirectoryServer.new(@log)
 		@directory_server.setup
 	end
 

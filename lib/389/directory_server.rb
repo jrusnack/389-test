@@ -4,29 +4,30 @@ require 'ldap/ldapserver'
 require 'util/os'
 require 'util/log'
 
-class DirectoryServer < LdapServer
+class DirectoryServer
+    include OS
+    include LogMixin
 
-    def initialize(params={})
+    def initialize(log, params={})
+        @log = log
         
         # Set general options
-        @fqdn    = params[:fqdn]     || OS.get_fqdn
+        @fqdn    = params[:fqdn]     || get_fqdn
         @user    = params[:user]     || "nobody"
         @group   = params[:group]    || "nobody"
 
         # Set instance options
         @default_backend    = params[:backend]  || "userRoot"
         @default_suffix     = params[:suffix]   || "dc=example,dc=com"
-        @name               = params[:name]     || OS.get_hostname
-        port                = params[:port]     || 389
-        root_dn             = params[:root_dn]  || "cn=directory manager"
-        root_pw             = params[:root_pw]  || "Secret123"
-
-        # Call superclass initialize method
-        super("localhost", port, root_dn, root_pw)
+        @name               = params[:name]     || get_hostname
+        @host               = params[:host]     || "localhost"
+        @port               = params[:port]     || 389
+        @root_dn            = params[:root_dn]  || "cn=directory manager"
+        @root_pw            = params[:root_pw]  || "Secret123"
 
         # Set root directory of instance, used later for starting/stopping the instance
         # $platform_64 bit global variable is set in Ldapclients module
-        if OS.is_64? then
+        if is_64? then
             @iroot = "/usr/lib64/dirsrv/slapd-#{@name}"
         else
             @iroot = "/usr/lib/dirsrv/slapd-#{@name}"
@@ -58,10 +59,10 @@ class DirectoryServer < LdapServer
         ds_bename=#{@default_backend}
         EOF
 
-        config_file = OS.get_tmp_file
+        config_file = get_tmp_file
         File.open(config_file, "w+") {|file| file.write(config)}
 
-        OS.sh "sudo setup-ds.pl -s -f #{config_file}"
+        sh "sudo setup-ds.pl -s -f #{config_file}"
         
         if ! $?.success? then
             raise RuntimeError.new("Failed to create new instance. Return code: #{$?.exitstatus}")
@@ -72,7 +73,7 @@ class DirectoryServer < LdapServer
 
     # Executes remove-ds.pl script on instance.
     def remove
-        OS.sh "sudo remove-ds.pl -i slapd-#{@name}"
+        sh "sudo remove-ds.pl -i slapd-#{@name}"
         if ! $?.success?
             raise RuntimeError.new("Error occurred while removing instance. Return code: #{$?.exitstatus}")
         else
@@ -82,7 +83,7 @@ class DirectoryServer < LdapServer
 
     def restart
         raise RuntimeError.new("Directory server has not been set up. Run \"setup\" method first.") if !@live
-        OS.sh "sudo #{@iroot}/restart-slapd"
+        sh "sudo #{@iroot}/restart-slapd"
         if ! $?.success? then
             raise RuntimeError.new("Error occurred while restarting instance. Return code: #{$?.exitstatus}")
         end
@@ -94,7 +95,7 @@ class DirectoryServer < LdapServer
         # Don`t start if server is already running
         return if running?
 
-        OS.sh "sudo #{@iroot}/start-slapd"
+        sh "sudo #{@iroot}/start-slapd"
         if ! $?.success? then
             raise RuntimeError.new("Error occurred while starting instance. Return code: #{$?.exitstatus}")
         end
@@ -106,7 +107,7 @@ class DirectoryServer < LdapServer
         # Don`t stop if server is already stopped
         return if !running?
 
-        OS.sh "sudo #{@iroot}/stop-slapd"
+        sh "sudo #{@iroot}/stop-slapd"
         if ! $?.success? then
             raise RuntimeError.new("Error occurred while stopping instance. Return code: #{$?.exitstatus}")
         end

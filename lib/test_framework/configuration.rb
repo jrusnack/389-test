@@ -7,11 +7,20 @@ class Configuration
 		####################################################################################
 		# These are default values of options used when no specific value is set manually
 
+		# Directories
 		@root_directory 	= File.expand_path("../../../", Pathname.new(__FILE__).realpath)
 		@output_directory	= "#{@root_directory}/output"
 		@test_directory 	= "#{@root_directory}/test"
 
+		# Run all testsuites by default
 		@selection_method 	= TestsuiteExplorer::SELECT_ALL
+
+		# Reports
+		@write_xml_report 	= true
+		@write_junit_report = true
+		@xml_report_file	= @output_directory + "/results.xml"
+		@junit_report_file	= @output_directory + "/junit.xml"
+
 		####################################################################################
 
 		# Defined getters and setters for all instance variables

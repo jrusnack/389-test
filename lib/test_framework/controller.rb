@@ -23,17 +23,31 @@ class Controller
 	def execute
 		# load special Environment testsuite and run startup and all testcases
 		require 'test_framework/environment'
-		@environment = Testsuite::Builder.get_testsuite
-		@environment.execute_startup(@configuration, @configuration.output_directory)
+		output_file = @configuration.output_directory + "/#{Testsuite::Builder.name}"
+		@environment = Testsuite::Builder.get_testsuite(Log.new(output_file))
+		@environment.execute_startup
 		@environment.execute_testcases
 
+		# execute all testsuites
 		@testsuites.each do |testsuite|
-			output_directory = @configuration.output_directory + "/#{testsuite.name}"
-			FileUtils.mkdir_p(output_directory)
-			testsuite.execute(@configuration, output_directory)
+			testsuite.execute
 		end
+
 		# run cleanup
 		@environment.execute_cleanup
+	end
+
+	def write_reports
+		write_xml_report(@configuration.xml_report_file) if @configuration.write_xml_report
+		write_junit_report(@configuration.junit_report_file) if @configuration.write_junit_report
+	end	
+
+	private
+
+	def add_testsuite(testsuite)
+		require testsuite
+		output_file = @configuration.output_directory + "/#{Testsuite::Builder.name}"
+		@testsuites << Testsuite::Builder.get_testsuite(Log.new(output_file))
 	end
 
 	def write_xml_report(output_file)
@@ -52,12 +66,5 @@ class Controller
 			@junit_report.add(testsuite.to_junit_xml)
 		end
 		File.open(output_file, 'w') {|file| @junit_report.write(file, 4)}
-	end
-
-	private
-
-	def add_testsuite(testsuite)
-		require testsuite
-		@testsuites << Testsuite::Builder.get_testsuite
 	end
 end

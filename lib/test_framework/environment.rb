@@ -1,7 +1,6 @@
 
 
 require "test_framework/dsl"
-require 'util/os'
 
 testsuite "environment" do
 
@@ -14,7 +13,7 @@ testsuite "environment" do
 	testcase "check"
 		run do
 			assert("Directory Server rpm should be installed.",	
-				OS.sh("rpm -qa | grep 389-ds-base").include?("389-ds-base"))
+				sh("rpm -qa | grep 389-ds-base").include?("389-ds-base"))
 		end
 
 end
