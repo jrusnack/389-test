@@ -8,11 +8,8 @@ $:.unshift File.expand_path("../../lib", Pathname.new(__FILE__).realpath)
 
 require 'test_framework/controller'
 require 'test_framework/configuration'
-require 'test_framework/environment'
 
 config = Configuration.new
-Environment.prepare(config)
-Environment.check_environment(config)
 controller = Controller.new(config)
 controller.execute
 controller.write_xml_report(config.output_directory + "/results.xml")

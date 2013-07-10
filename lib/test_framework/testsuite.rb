@@ -28,27 +28,38 @@ class Testsuite
 		@skipped = Array.new
 	end
 
-	def execute(output_file = nil)
-		Log.logfile = output_file
-		log(header)
+	def execute(configuration, output_directory)
+		execute_startup(configuration, output_directory)
+		execute_testcases
+		execute_cleanup
+	end
+
+	def execute_startup(configuration, output_directory)
+		@configuration = configuration
+		Log.logfile = output_directory + "/#{@name}"
+		log(testsuite_header)
 		if @startup != nil
 			run_testcase(@startup)
 			if @startup.result == Testcase::FAIL
 				@skipped.concat(@testcases)
 				run_testcase(@cleanup) if @cleanup != nil
-				log(footer)
+				log(testsuite_footer)
 				return
 			end
 		end
+	end
 
+	def execute_testcases
 		@testcases.each do |testcase|
 			run_testcase(testcase)
 		end
+	end
 
+	def execute_cleanup
 		if @cleanup != nil
 			run_testcase(@cleanup)
 		end
-		log(footer)
+		log(testsuite_footer)
 	end
 
 	def run_testcase(testcase)
@@ -103,11 +114,11 @@ class Testsuite
 
 	private
 
-	def header
+	def testsuite_header
 		"#"*20 + " Testsuite #{@name} " + "#"*20
 	end
 
-	def footer
+	def testsuite_footer
 		"\n" + "#"*20 + " End of #{@name} " + "#"*20
 	end
 

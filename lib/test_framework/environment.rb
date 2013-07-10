@@ -1,20 +1,20 @@
 
-module Environment
 
-	def self.check_environment(configuration)
-		# make sure output directory exists
-		unless File.exist?(configuration.output_directory)
-			raise RuntimeError.new("Configuration.output_directory \"#{configuration.output_directory}\" does not exist")
-		end
-		# make sure test directory exists
-		unless File.exist?(configuration.test_directory)
-			raise RuntimeError.new("Configuration.test_directory \"#{configuration.test_directory}\" does not exist")
-		end
+require "test_framework/dsl"
+require 'util/os'
+
+testsuite "environment" do
+
+	# Prepares machine for running the tests
+	startup do
 
 	end
 
-	def self.prepare(configuration)
-		# create output directory for reports if it does not exist
-		FileUtils.mkdir_p(configuration.output_directory) unless File.exist?(configuration.output_directory)
-	end
+	# Checks to make sure machine is correctly set up
+	testcase "check"
+		run do
+			assert("Directory Server rpm should be installed.",	
+				OS.sh("rpm -qa | grep 389-ds-base").include?("389-ds-base"))
+		end
+
 end

@@ -113,7 +113,7 @@ class DirectoryServer < LdapServer
     end
 
     def running?
-        if OS.sh("sudo service dirsrv status #{@name}").index("is running") then
+        if `sudo service dirsrv status #{@name}`.include?("is running.") then
             return true
         else
             return false

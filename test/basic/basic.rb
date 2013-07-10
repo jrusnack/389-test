@@ -2,7 +2,7 @@
 require "test_framework/dsl"
 require "389/directory_server"
 
-testsuite "Basic" do
+testsuite "basic" do
 
 	startup do
 		@directory_server = DirectoryServer.new
