@@ -20,6 +20,7 @@ testsuite "basic" do
 		end
 
 	testcase "tc02"
+		purpose "Test that should fail"
 		run do
 			@directory_server.stop
 			assert("DS should be running.", @directory_server.running?)

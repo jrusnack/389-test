@@ -11,6 +11,7 @@ class Testcase
 		def self.new(name, testsuite_name)
 			@@name = name
 			@@testsuite_name = testsuite_name
+			@@purpose = nil
 			@@all_parameters = Array.new
 		end
 
@@ -18,21 +19,26 @@ class Testcase
 			@@all_parameters.concat([parameters])
 		end
 
+		def self.add_purpose(purpose)
+			@@purpose = purpose
+		end
+
 		def self.create_testcases(&block)
 			if @@all_parameters.size == 0
-				return [Testcase.new(@@name, @@testsuite_name, nil, &block)]
+				return [Testcase.new(@@name, @@testsuite_name, @@purpose, nil, &block)]
 			else
 				testcases = Array.new
 				@@all_parameters.each do |parameters|
-					testcases << Testcase.new(@@name, @@testsuite_name, parameters, &block)
+					testcases << Testcase.new(@@name, @@testsuite_name, @@purpose, parameters, &block)
 				end
 				return testcases
 			end
 		end
 	end
 
-	def initialize(name, testsuite_name, parameters, &code)
+	def initialize(name, testsuite_name, purpose, parameters, &code)
 		@name = name
+		@purpose = purpose
 		@testsuite_name = testsuite_name
 		@parameters = parameters
 		@code = code
@@ -77,11 +83,10 @@ class Testcase
 	end
 
 	def header
-		if @parameters
-			return "\n" + ":"*65 + "\n#{@name} with parameters #{@parameters}\n" + ":"*65
-		else
-			return "\n" + ":"*65 + "\n#{@name}\n" + ":"*65
-		end
+		output = "\n" + ":"*65 + "\nTESTCASE:   #{@name}"
+		output << "\nPURPOSE:    #{@purpose}" if @purpose
+		output << "\nPARAMETERS: #{@parameters}" if @parameters
+		output << "\n" + ":"*65
 	end
 
 	def footer

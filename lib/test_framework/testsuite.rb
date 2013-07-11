@@ -133,7 +133,7 @@ class Testsuite
 	# Functions for setting up the testcase #
 
 	def startup(&block)
-		@startup = Testcase.new("startup", @name, nil, &block)
+		@startup = Testcase.new("startup", @name, nil, nil, &block)
 		@startup.result = Testcase::PASS 	# Passes by default
 	end
 
@@ -148,12 +148,16 @@ class Testsuite
 		Testcase::Builder.add_parameters(parameters)
 	end
 
+	def purpose(purpose)
+		Testcase::Builder.add_purpose(purpose)
+	end
+
 	def run(&block)
 		@testcases.concat(Testcase::Builder.create_testcases(&block))
 	end
 
 	def cleanup(&block)
-		@cleanup = Testcase.new("cleanup", @name, nil, &block)
+		@cleanup = Testcase.new("cleanup", @name, nil, nil, &block)
 		@cleanup.result = Testcase::PASS 	# Passes by default
 	end
 
