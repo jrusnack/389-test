@@ -4,7 +4,7 @@ require 'ldap/ldapserver'
 require 'util/os'
 require 'util/log'
 
-class DirectoryServer
+class DirectoryServer < LdapServer
     include OS
     include LogMixin
 
@@ -24,6 +24,8 @@ class DirectoryServer
         @port               = params[:port]     || 389
         @root_dn            = params[:root_dn]  || "cn=directory manager"
         @root_pw            = params[:root_pw]  || "Secret123"
+
+        super(@host, @port, @root_dn, @root_pw)
 
         # Set root directory of instance, used later for starting/stopping the instance
         # $platform_64 bit global variable is set in Ldapclients module

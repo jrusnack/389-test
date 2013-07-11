@@ -62,7 +62,7 @@ module Ldapclients
     def self.ldapsearch(options={}, version_to_use = :default)
 
         if version_to_use == :default then
-            version_to_use = @mozldap ? :mozldap : :openldap
+            version_to_use = @openldap ? :openldap : :openldap
         end
 
         # This will set command to the path to ldapsearch

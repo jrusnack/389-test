@@ -37,4 +37,18 @@ class LdapServer
         Ldapclients::ldapmodify(opt, input, version_to_use)
     end
 
+    def ldapsearch_r(options={})
+        opt = options.clone
+        opt[:bind_dn] = @root_dn
+        opt[:bind_pw] = @root_pw
+        ldapsearch(opt)
+    end
+
+    def ldapmodify_r(options={})
+        opt = options.clone
+        opt[:bind_dn] = @root_dn
+        opt[:bind_pw] = @root_pw
+        ldapmodify(opt)
+    end
+
 end
