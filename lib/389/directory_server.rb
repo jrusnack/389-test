@@ -45,8 +45,7 @@ class DirectoryServer < LdapServer
 
     def setup
         # Create config for new DS instance
-        # gsub will remove 8 spaces at the beginning of each line
-        config = <<-EOF.gsub(/^ {8}/, '')
+        config = <<-EOF
         [General]
         FullMachineName=#{@fqdn}
         SuiteSpotUserID=#{@user}
@@ -61,6 +60,8 @@ class DirectoryServer < LdapServer
         ds_bename=#{@default_backend}
         EOF
 
+        # Remove spaces from the beginning and the end of lines
+        config = config.lines.to_a.map{|line| line.strip}.join("\n")
         config_file = get_tmp_file
         File.open(config_file, "w+") {|file| file.write(config)}
 
@@ -120,6 +121,25 @@ class DirectoryServer < LdapServer
             return true
         else
             return false
+        end
+    end
+
+    def add_user(name)
+        dn = "uid=#{name}, ou=people, #{@default_suffix}"
+        log "Adding user #{dn}"
+        input = <<-EOF
+            dn: #{dn}
+            objectClass: top
+            objectClass: person
+            objectClass: inetOrgPerson
+            cn: #{name}
+            sn: #{name}
+            uid: #{name}
+        EOF
+        log self.ldapadd_r({}, input)
+
+        if ! $?.success? then
+            raise RuntimeError.new("Error occurred while adding new user. Return code: #{$?.exitstatus}")
         end
     end
 
