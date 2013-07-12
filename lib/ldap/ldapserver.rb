@@ -65,4 +65,17 @@ class LdapServer
         ldapadd(opt, input)
     end
 
+    # Bind as root and get value of attribute on entry
+    # Returns single value or array of multiple values
+    def get_attribute(attribute, entry)
+        log "Getting attribute #{attribute} from entry #{entry}"
+        values = ldapsearch_r({:base => "#{entry}", :scope => 'base', :attributes => "#{attribute}",\
+            :other => '-LLL'}).strip.lines.to_a.map{|line| line.gsub(/^#{attribute}: (.*)$/, '\1').chomp}
+        if values.size > 2
+            return values[1..values.size]
+        else
+            return values[1]
+        end
+    end
+
 end
