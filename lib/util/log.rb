@@ -26,7 +26,8 @@ class Log
 		prefix = "[#{Time.now.strftime("%T.%L")}] "
 		tag = tag != nil ? "[#{tag}] " : ""
 		# add prefix and tag in front of each line
-		output = message.chomp.lines.to_a.map!{|line| line = prefix + tag + line}.join("") + "\n"
+		output = message.lines.to_a.map!{|line| line = prefix + tag + line}.join("")
+		output = output.chomp + "\n"
 		# write to @logfile if it exists
 		File.open(@logfile,'a') do |logfile|
 			logfile.write(output)
