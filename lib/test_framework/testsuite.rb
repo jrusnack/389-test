@@ -175,9 +175,17 @@ class Testsuite
 
 	def assert(message, condition)
 		if condition == true
-			@log.info(message, "PASS")
+			@log.info(message, 'PASS')
 		else
 			raise Failure.new(message)
+		end
+	end
+
+	def assert_equal(message, expected, actual)
+		if expected == actual
+			@log.info(message, 'PASS')
+		else
+			raise Failure.new(message + " Expected: #{expected}, but was #{actual}.")
 		end
 	end
 end
