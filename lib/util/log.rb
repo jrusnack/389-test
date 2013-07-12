@@ -23,6 +23,7 @@ class Log
 
 	def info(message, tag)
 		return if message == nil
+		message = message.to_s if ! message.kind_of?(String)
 		prefix = "[#{Time.now.strftime("%T.%L")}] "
 		tag = tag != nil ? "[#{tag}] " : ""
 		# add prefix and tag in front of each line
