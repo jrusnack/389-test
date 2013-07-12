@@ -9,7 +9,7 @@ class Configuration
 
 		# Directories
 		@root_directory 	= File.expand_path("../../../", Pathname.new(__FILE__).realpath)
-		@output_directory	= "#{@root_directory}/output"
+		@output_directory	= "#{@root_directory}/output/#{Time.now.strftime("%Y.%m.%d-%H:%M")}"
 		@test_directory 	= "#{@root_directory}/test"
 
 		# Run all testsuites by default
