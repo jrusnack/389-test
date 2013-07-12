@@ -8,30 +8,39 @@ require 'util/os'
 class Testsuite
 	include LogMixin
 	include OS
-	attr_reader :name, :passed, :failed, :skipped
+	attr_reader :name, :passed, :failed, :skipped, :options
 
 	class Builder
 
-		def self.init(name, &block)
+		def self.name=(name)
 			@@name = name
-			@@block = block
 		end
 
-		def self.get_testsuite(log)
-			testsuite = Testsuite.new(name, log)
-			# Probably the ugliest thing ..
-			testsuite.instance_eval(&@@block)
-			return testsuite
+		def self.options=(options)
+			@@options = options
+		end
+
+		def self.testcases(&block)
+			@@block = block
 		end
 
 		def self.name
 			@@name
 		end
+
+		def self.get_testsuite(log, configuration)
+			testsuite = Testsuite.new(@@name, log, @@options, configuration)
+			# Probably the ugliest thing ..
+			testsuite.instance_eval(&@@block)
+			return testsuite
+		end
 	end
 
-	def initialize(name, log)
+	def initialize(name, log, options, configuration)
 		@name = name
 		@log = log
+		@options = options
+		@configuration = configuration
 		@testcases = Array.new
 		@startup = nil
 		@cleanup = nil

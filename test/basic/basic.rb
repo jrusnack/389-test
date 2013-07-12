@@ -55,7 +55,7 @@ testsuite "basic"
 		run do |username|
 			log @directory_server.add_user(username)
 			log "Searching for added user #{username} ..."
-			log @directory_server.ldapsearch_r(:base => "uid=#{username},dc=example,dc=com", :other => '-LLL')
+			log @directory_server.ldapsearch_r(:base => "uid=#{username},ou=people, dc=example,dc=com", :other => '-LLL')
 			assert("User should be present on DS", $?.exitstatus == 0)
 		end
 

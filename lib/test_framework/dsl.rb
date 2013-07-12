@@ -5,6 +5,14 @@ PASS = Testcase::PASS
 FAIL = Testcase::FAIL
 UNKNOWN = Testcase::UNKNOWN
 
-def testsuite(name, &block)	
-	Testsuite::Builder.init(name, &block)
+def testsuite(name)
+	Testsuite::Builder.name = name
+end
+
+def options(options)
+	Testsuite::Builder.options = options
+end
+
+def testcases(&block)
+	Testsuite::Builder.testcases(&block)
 end

@@ -2,7 +2,8 @@
 
 require "test_framework/dsl"
 
-testsuite "environment" do
+testsuite "environment" 
+	testcases do
 
 	# Prepares machine for running the tests
 	startup do

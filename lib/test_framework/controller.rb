@@ -21,19 +21,15 @@ class Controller
 	end	
 
 	def execute
-		# load special Environment testsuite and run startup and all testcases
+		# load special Environment testsuite
 		require 'test_framework/environment'
 		output_file = @configuration.output_directory + "/#{Testsuite::Builder.name}"
-		@environment = Testsuite::Builder.get_testsuite(Log.new(output_file))
+		@environment = Testsuite::Builder.get_testsuite(Log.new(output_file), @configuration)
+		
+		# Execute startup and testcases of Environment before running any other testsuites
 		@environment.execute_startup
 		@environment.execute_testcases
-
-		# execute all testsuites
-		@testsuites.each do |testsuite|
-			testsuite.execute
-		end
-
-		# run cleanup
+		run_testsuites_sequentially
 		@environment.execute_cleanup
 	end
 
@@ -47,7 +43,7 @@ class Controller
 	def add_testsuite(testsuite)
 		require testsuite
 		output_file = @configuration.output_directory + "/#{Testsuite::Builder.name}"
-		@testsuites << Testsuite::Builder.get_testsuite(Log.new(output_file))
+		@testsuites << Testsuite::Builder.get_testsuite(Log.new(output_file), @configuration)
 	end
 
 	def write_xml_report(output_file)
@@ -66,5 +62,15 @@ class Controller
 			@junit_report.add(testsuite.to_junit_xml)
 		end
 		File.open(output_file, 'w') {|file| @junit_report.write(file, 4)}
+	end
+
+	def run_testsuites_sequentially
+		@testsuites.each do |testsuite|
+			testsuite.execute
+		end
+	end
+
+	def run_testsuites_concurrently
+		
 	end
 end

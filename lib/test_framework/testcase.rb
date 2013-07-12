@@ -16,7 +16,11 @@ class Testcase
 		end
 
 		def self.add_parameters(parameters)
-			@@all_parameters.concat([parameters])
+			if parameters.size == 1
+				@@all_parameters.concat(parameters)
+			else
+				@@all_parameters.concat([parameters]) 
+			end
 		end
 
 		def self.add_purpose(purpose)
