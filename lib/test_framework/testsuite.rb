@@ -4,10 +4,12 @@ require "test_framework/failure"
 require "rexml/element"
 require 'util/log'
 require 'util/os'
+require 'ldap/ldap'
 
 class Testsuite
 	include LogMixin
 	include OS
+	include Ldap
 	attr_reader :name, :passed, :failed, :skipped, :options
 
 	class Builder
