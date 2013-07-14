@@ -1,12 +1,14 @@
 
 
 require 'ldap/ldapserver'
+require 'ldap/ldap'
 require 'util/os'
 require 'util/log'
 
 class DirectoryServer < LdapServer
     include OS
     include LogMixin
+    include Ldap
 
     def initialize(log, params={})
         @log = log
@@ -33,13 +35,6 @@ class DirectoryServer < LdapServer
             @iroot = "/usr/lib64/dirsrv/slapd-#{@name}"
         else
             @iroot = "/usr/lib/dirsrv/slapd-#{@name}"
-        end
-
-        if File.exist?(@iroot) then
-            # This variable keeps info whether DS instance has been set up or not
-            @live = true
-        else
-            @live = false
         end
     end
 
@@ -69,8 +64,6 @@ class DirectoryServer < LdapServer
         
         if ! $?.success? then
             raise RuntimeError.new("Failed to create new instance. Return code: #{$?.exitstatus}")
-        else
-            @live = true
         end
     end
 
@@ -79,13 +72,10 @@ class DirectoryServer < LdapServer
         sh "sudo remove-ds.pl -i slapd-#{@name}"
         if ! $?.success?
             raise RuntimeError.new("Error occurred while removing instance. Return code: #{$?.exitstatus}")
-        else
-            @live = false
         end
     end
 
     def restart
-        raise RuntimeError.new("Directory server has not been set up. Run \"setup\" method first.") if !@live
         sh "sudo #{@iroot}/restart-slapd"
         if ! $?.success? then
             raise RuntimeError.new("Error occurred while restarting instance. Return code: #{$?.exitstatus}")
@@ -93,8 +83,6 @@ class DirectoryServer < LdapServer
     end
 
     def start
-        raise RuntimeError.new("Directory server has not been set up. Run \"setup\" method first.") if !@live
-
         # Don`t start if server is already running
         return if running?
 
@@ -105,8 +93,6 @@ class DirectoryServer < LdapServer
     end
 
     def stop
-        raise RuntimeError.new("Directory server has not been set up. Run \"setup\" method first.") if !@live
-
         # Don`t stop if server is already stopped
         return if !running?
 
@@ -124,17 +110,17 @@ class DirectoryServer < LdapServer
         end
     end
 
-    def add_user(name)
-        dn = "uid=#{name}, ou=people, #{@default_suffix}"
+    def add_user(dn)
         log "Adding user #{dn}"
+        rdn = get_rdn(dn)
         input = <<-EOF
             dn: #{dn}
             objectClass: top
             objectClass: person
             objectClass: inetOrgPerson
-            cn: #{name}
-            sn: #{name}
-            uid: #{name}
+            cn: #{rdn}
+            sn: #{rdn}
+            uid: #{rdn}
         EOF
         log self.ldapadd_r(input)
 
