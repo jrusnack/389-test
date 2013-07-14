@@ -9,7 +9,7 @@ def testsuite(name)
 	Testsuite::Builder.name = name
 end
 
-def options(options)
+def options(options={})
 	Testsuite::Builder.options = options
 end
 

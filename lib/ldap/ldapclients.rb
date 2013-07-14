@@ -51,7 +51,7 @@ module Ldapclients
 
     # Generic wrapper around ldapmodify - expects hash of options, input string and version_to_use as arguments.
     # Options are given as a hash, so they are independent of the tool used (mozldap or openldap one).
-    def self.ldapmodify(options={}, input="", version_to_use = :default)
+    def self.ldapmodify(input="", options={}, version_to_use = :default)
 
         # By default, we expect openldap clients
         if version_to_use == :default then
@@ -91,7 +91,7 @@ module Ldapclients
 
     # Generic wrapper around ldapmodify - expects hash of options, input string and version_to_use as arguments.
     # Options are given as a hash, so they are independent of the tool used (mozldap or openldap one).
-    def self.ldapadd(options={}, input="", version_to_use = :default)
+    def self.ldapadd(input="", options={}, version_to_use = :default)
 
         # By default, we expect openldap clients
         if version_to_use == :default then

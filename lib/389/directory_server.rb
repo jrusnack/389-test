@@ -136,7 +136,7 @@ class DirectoryServer < LdapServer
             sn: #{name}
             uid: #{name}
         EOF
-        log self.ldapadd_r({}, input)
+        log self.ldapadd_r(input)
 
         if ! $?.success? then
             raise RuntimeError.new("Error occurred while adding new user. Return code: #{$?.exitstatus}")

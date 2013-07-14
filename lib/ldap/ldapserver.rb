@@ -24,21 +24,21 @@ class LdapServer
     # This is a generic ldapmodify method. Note that this is instance method,
     # and so it performs ldapmodify against DS instance it is called on. You 
     # can specify :port, but :host will be overwritten. See implementation.
-    def ldapmodify(options={}, input="", version_to_use = :default)
+    def ldapmodify( input="", options={}, version_to_use = :default)
         opt = options.clone                         # Clone, not to rewrite original params
         opt[:host] = @host                          # Set host, rewrite even when specified
         opt[:port] = @port if !opt.has_key?(:port)  # Set port, if not set already
-        Ldapclients::ldapmodify(opt, input, version_to_use)
+        Ldapclients::ldapmodify(input, opt, version_to_use)
     end
 
     # This is a generic ldapadd method. Note that this is instance method,
     # and so it performs ldapadd against DS instance it is called on. You 
     # can specify :port, but :host will be overwritten. See implementation.
-    def ldapadd(options={}, input="", version_to_use = :default)
+    def ldapadd(input="",options={}, version_to_use = :default)
         opt = options.clone                         # Clone, not to rewrite original params
         opt[:host] = @host                          # Set host, rewrite even when specified
         opt[:port] = @port if !opt.has_key?(:port)  # Set port, if not set already
-        Ldapclients::ldapadd(opt, input, version_to_use)
+        Ldapclients::ldapadd(input, opt, version_to_use)
     end
 
     # Ldapsearch as root
@@ -50,19 +50,19 @@ class LdapServer
     end
 
     # Ldapmodify as root
-    def ldapmodify_r(options={}, input)
+    def ldapmodify_r(input, options={})
         opt = options.clone
         opt[:bind_dn] = @root_dn
         opt[:bind_pw] = @root_pw
-        ldapmodify(opt, input)
+        ldapmodify(input, opt)
     end
 
     # Ldapadd as root
-    def ldapadd_r(options={}, input)
+    def ldapadd_r(input, options={})
         opt = options.clone
         opt[:bind_dn] = @root_dn
         opt[:bind_pw] = @root_pw
-        ldapadd(opt, input)
+        ldapadd(input, opt)
     end
 
     # Bind as root and get value of attribute on entry
