@@ -71,10 +71,16 @@ class LdapServer
         log "Getting attribute #{attribute} from entry #{entry}"
         values = ldapsearch_r({:base => "#{entry}", :scope => 'base', :attributes => "#{attribute}",\
             :other => '-LLL'}).strip.lines.to_a.map{|line| line.gsub(/^#{attribute}: (.*)$/, '\1').chomp}
-        if values.size > 2
+        case 
+        # Multiple values
+        when values.size > 2
             return values[1..values.size]
-        else
+        # Single value
+        when values.size == 2
             return values[1]
+        # No value of attribute found
+        else
+            return nil
         end
     end
 
