@@ -2,12 +2,14 @@
 require "test_framework/dsl"
 require "389/directory_server"
 
+SUFFIX="dc=example,dc=com"
+
 testsuite "basic"
-	options({ :parallelizable => :false })
+	options :parallelizable => :false 
 	testcases do
 
 	startup do
-		@directory_server = DirectoryServer.new(@log, {:suffix => "dc=example, dc=com"})
+		@directory_server = DirectoryServer.new(@log, :suffix => SUFFIX)
 		@directory_server.setup
 		@directory_server.start
 		assert("DS should be running.", @directory_server.running?)
@@ -37,29 +39,79 @@ testsuite "basic"
 	testcase "tc04"
 		purpose "Try anonymous bind"
 		run do
-			log @directory_server.ldapsearch({:base => ' ', :scope => 'base', :other => '-LLL -x', :attributes => 'supportedLDAPVersion'})
-			assert("Search should be successful with return code 0", $?.exitstatus == 0)
+			log @directory_server.ldapsearch(:base => ' ', :scope => 'base', :other => '-LLL -x', :attributes => 'supportedLDAPVersion')
+			assert_equal("Search should be successful with return code 0", 0, $?.exitstatus)
 		end
 
 	testcase "tc05"
 		purpose "Try root DN bind"
 		run do
-			log @directory_server.ldapsearch_r({:base => "", :scope => 'base', :other => '-LLL -x', :attributes => 'supportedLDAPVersion'})
-			assert("Search should be successful with return code 0", $?.exitstatus == 0)
+			log @directory_server.ldapsearch_r(:base => "", :scope => 'base', :other => '-LLL -x', :attributes => 'supportedLDAPVersion')
+			assert_equal("Search should be successful with return code 0", 0, $?.exitstatus)
 		end
 
 	testcase "tc06"
-		purpose "Try adding new entry"
-		with "tuser1"
-		with "tuser2"
-		run do |username|
-			log @directory_server.add_user(username)
-			log "Searching for added user #{username} ..."
-			log @directory_server.ldapsearch_r(:base => "uid=#{username},ou=people, dc=example,dc=com", :other => '-LLL')
-			assert("User should be present on DS", $?.exitstatus == 0)
+		purpose "Try adding new user"
+		with "uid=tuser1, ou=people, #{SUFFIX}"
+		with "cn=tuser2, ou=people, #{SUFFIX}"
+		run do |user|
+			log @directory_server.add_user(user)
+			log "Searching for added user #{user} ..."
+			log @directory_server.ldapsearch_r(:base => user, :other => '-LLL')
+			assert_equal("User should be present on DS", 0, $?.exitstatus)
+		end
+
+	testcase "tc07"
+		purpose "Try modifying user - adding attribute"
+		with "uid=tuser1, ou=people, #{SUFFIX}"
+		with "cn=tuser2, ou=people, #{SUFFIX}"
+		run do |user|
+			mail = "#{get_rdn(user)}@example.com"
+			input = <<-EOF
+				dn: #{user}
+				changetype: modify
+				add: mail
+				mail: #{mail}
+			EOF
+			log @directory_server.ldapmodify_r(input)
+			value = @directory_server.get_attribute('mail', user)
+			assert_equal("Attribute mail should be added", mail, value)
+		end
+
+	testcase "tc08"
+		purpose "Try modifying user - replacing attribute"
+		with "uid=tuser1, ou=people, #{SUFFIX}"
+		with "cn=tuser2, ou=people, #{SUFFIX}"
+		run do |user|
+			rdn = get_rdn(user)
+			input = <<-EOF
+				dn: #{user}
+				changetype: modify
+				replace: sn
+				sn: #{rdn}-modified
+			EOF
+			log @directory_server.ldapmodify_r(input)
+			value = @directory_server.get_attribute('sn', user)
+			assert_equal("Value of sn should be modified.", "#{rdn}-modified", value)
+		end
+
+	testcase "tc09"
+		purpose "Try modifying user - deleting attribute"
+		with "uid=tuser1, ou=people, #{SUFFIX}"
+		with "cn=tuser2, ou=people, #{SUFFIX}"
+		run do |user|
+			input = <<-EOF
+				dn: #{user}
+				changetype: modify
+				delete: mail
+			EOF
+			log @directory_server.ldapmodify_r(input)
+			value = @directory_server.get_attribute('mail', user)
+			assert_equal("Value of sn should be deleted.", nil, value)
 		end
 
 	cleanup do
+		@directory_server.stop
 		@directory_server.remove
 	end
 end
