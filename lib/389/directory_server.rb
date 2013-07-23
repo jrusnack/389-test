@@ -9,6 +9,7 @@ require 'util/log'
 # SLL, replication, DNA, ...) in one file and prevents having one huge file with
 # DS implementation.
 require '389/basic_functionality'
+require '389/replication'
 
 class DirectoryServer < LdapServer
     # include LogMixin to add log() and log_error() methods to DirectoryServer

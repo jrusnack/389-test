@@ -8,7 +8,9 @@ class DirectoryServer < LdapServer
             if ! self.instance_exists?(name)
                 params[:port] = port
                 params[:name] = name
-                return self.new(log, params)
+                new_instance = self.new(log, params)
+                new_instance.setup
+                return new_instance
             end
         end
         raise RuntimeError.new("Could not create new instance of Directory Server. No free instance name.")
