@@ -49,18 +49,22 @@ class Controller
 	def write_xml_report(output_file)
 		@xml_report = REXML::Document.new
 		@xml_report << REXML::XMLDecl.new
+		results_xml = REXML::Element.new("results")
 		@testsuites.each do |testsuite|
-			@xml_report.add(testsuite.to_xml)
+			results_xml.add(testsuite.to_xml)
 		end
+		@xml_report.add(results_xml)
 		File.open(output_file, 'w') {|file| @xml_report.write(file, 4)}
 	end
 
 	def write_junit_report(output_file)
 		@junit_report = REXML::Document.new
 		@junit_report << REXML::XMLDecl.new
+		testsuites_xml = REXML::Element.new("testsuites")
 		@testsuites.each do |testsuite|
-			@junit_report.add(testsuite.to_junit_xml)
+			testsuites_xml.add(testsuite.to_junit_xml)
 		end
+		@junit_report.add(testsuites_xml)
 		File.open(output_file, 'w') {|file| @junit_report.write(file, 4)}
 	end
 
