@@ -42,4 +42,18 @@ module OS
         @log.info(`#{command} 2>&1`.chomp!, "SH")
     end
 
+    # Returns random unused TCP port
+    def get_free_port
+        # Get upper and lower bound for ephemeral ports on this system
+        ranges = File.open("/proc/sys/net/ipv4/ip_local_port_range",'r') {|file| file.read}
+        # ranges contains "low high", split it on whitespace and convert both from string to integer
+        low, high = ranges.split(/\s/).map {|e| e.to_i}
+        10.times do
+            random_port = rand(high - low) + low
+            lsof_out = `lsof -iTCP:#{random_port}`
+            return random_port if lsof_out.empty?
+        end
+        raise RuntimeError.new("Could not find any unused port.")
+    end
+
 end

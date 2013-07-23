@@ -85,7 +85,7 @@ module Ldapclients
         if options.has_key?(:file) then
             return `#{command} 2>&1`
         else
-            return `#{command} 2>&1 <<EOF\n#{self. sanitize_input(input)}\nEOF`
+            return `#{command} 2>&1 <<EOF\n#{self.sanitize_input(input)}\nEOF`
         end
     end
 

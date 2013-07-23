@@ -9,7 +9,7 @@ testsuite "basic"
 	testcases do
 
 	startup do
-		@directory_server = DirectoryServer.new(@log, :suffix => SUFFIX)
+		@directory_server = DirectoryServer.get_instance(@log, :suffix => SUFFIX)
 		@directory_server.setup
 		@directory_server.start
 		assert("DS should be running.", @directory_server.running?)

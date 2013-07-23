@@ -6,9 +6,31 @@ require 'util/os'
 require 'util/log'
 
 class DirectoryServer < LdapServer
-    include OS
     include LogMixin
     include Ldap
+    # include OS will mix-in methods from OS module as instance methods
+    # extend OS will mix-in methods from OS module as class methods
+    # awful, but necessary if we want to use OS methods in both 
+    # instance (like self.get_instance) and class methods (like initialize)
+    include OS
+    extend OS
+
+    def self.get_instance(log, params={})
+        port = get_free_port
+        1000.times do |i|
+            name = get_hostname + "#{i}"
+            if ! self.instance_exists?(name)
+                params[:port] = port
+                params[:name] = name
+                return self.new(log, params)
+            end
+        end
+        raise RuntimeError.new("Could not create new instance of Directory Server. No free instance name.")
+    end
+
+    def self.instance_exists?(name)
+        File.exists? "/etc/dirsrv/slapd-#{name}"
+    end
 
     def initialize(log, params={})
         @log = log
