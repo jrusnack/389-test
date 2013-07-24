@@ -1,7 +1,7 @@
 
 class Testcase
-
-	attr_accessor :output, :result, :error
+	attr_reader :name
+	attr_accessor  :output, :result, :error
 
 	UNKNOWN = "UNKNOWN"
 	PASS 	= "PASS"
@@ -84,6 +84,14 @@ class Testcase
 			testcase_xml.add(REXML::Element.new('skipped'))
 		end
 		return testcase_xml
+	end
+
+	def store_results
+		return Marshal.dump([output, error, result])
+	end
+
+	def load_results(string)
+		@output, @error, @result = Marshal.load(string)
 	end
 
 	def header

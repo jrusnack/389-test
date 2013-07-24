@@ -34,7 +34,9 @@ module OS
 
     # Returns path to unique filename in /tmp
     def get_tmp_file
-        return `mktemp`.chomp!
+        tmp_file = `mktemp`.chomp!
+        File.delete(tmp_file)
+        return tmp_file
     end
 
     # Executes command in shell
@@ -56,4 +58,18 @@ module OS
         raise RuntimeError.new("Could not find any unused port.")
     end
 
+    # Returns number of CPUs
+    def number_of_cpus
+        return `grep "^processor" /proc/cpuinfo | sort -u | wc -l`.to_i
+    end
+
+    # Returns true if the process with given PID is alive
+    def is_process_alive?(pid)
+        begin
+          Process.getpgid(pid)
+          true
+        rescue Errno::ESRCH
+          false
+        end
+    end
 end

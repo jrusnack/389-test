@@ -21,6 +21,10 @@ class Configuration
 		@xml_report_file	= @output_directory + "/results.xml"
 		@junit_report_file	= @output_directory + "/junit.xml"
 
+		# Execute multiple testsuites concurrently by default
+		@execution = :parallel
+		# @execution = :sequential
+
 		####################################################################################
 
 		# Defined getters and setters for all instance variables

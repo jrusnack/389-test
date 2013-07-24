@@ -2,10 +2,9 @@
 require "test_framework/testsuite"
 require "rexml/document"
 require "rexml/element"
-
+require "test_framework/scheduler"
 
 class Controller
-
 	def initialize(configuration)
 		@configuration = configuration
 		@testsuites = Array.new
@@ -29,7 +28,16 @@ class Controller
 		# Execute startup and testcases of Environment before running any other testsuites
 		@environment.execute_startup
 		@environment.execute_testcases
-		run_testsuites_sequentially
+
+		case @configuration.execution
+		when :parallel
+			run_testsuites_concurrently
+		when :sequential
+			run_testsuites_sequentially
+		else
+			raise RuntimeError.new("Unknown configuration.execution: #{@configuration.execution}")
+		end
+		
 		@environment.execute_cleanup
 	end
 
@@ -75,6 +83,7 @@ class Controller
 	end
 
 	def run_testsuites_concurrently
-		
+		scheduler = Scheduler.new(@testsuites)
+		scheduler.run
 	end
 end

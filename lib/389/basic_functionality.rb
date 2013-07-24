@@ -1,23 +1,28 @@
 
+require 'util/global_mutex'
+
 class DirectoryServer < LdapServer
+    @@setup_instance_mutex = GlobalMutex.new
 
     def self.get_instance(log, params={})
-        port = get_free_port
+        # Mutex to prevent having 2 DS with the same name
+        @@setup_instance_mutex.acquire
+        params[:port] = get_free_port
+        params[:name] = self.get_unused_instance_name
+        new_instance = self.new(log, params)
+        new_instance.setup
+        @@setup_instance_mutex.release
+        return new_instance
+    end
+
+    def self.get_unused_instance_name
         1000.times do |i|
             name = get_hostname + "#{i}"
-            if ! self.instance_exists?(name)
-                params[:port] = port
-                params[:name] = name
-                new_instance = self.new(log, params)
-                new_instance.setup
-                return new_instance
+            if ! File.exists? "/etc/dirsrv/slapd-#{name}"
+                return name
             end
         end
         raise RuntimeError.new("Could not create new instance of Directory Server. No free instance name.")
-    end
-
-    def self.instance_exists?(name)
-        File.exists? "/etc/dirsrv/slapd-#{name}"
     end
 
     def initialize(log, params={})

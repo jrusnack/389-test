@@ -10,7 +10,7 @@ class Testsuite
 	include LogMixin
 	include OS
 	include Ldap
-	attr_reader :name, :passed, :failed, :skipped, :options
+	attr_reader :name, :passed_count, :failed_count, :skipped_count, :options
 
 	class Builder
 
@@ -46,9 +46,9 @@ class Testsuite
 		@testcases = Array.new
 		@startup = nil
 		@cleanup = nil
-		@passed = Array.new
-		@failed = Array.new
-		@skipped = Array.new
+		@passed_count = 0
+		@failed_count = 0
+		@skipped_count = 0
 	end
 
 	def execute
@@ -65,7 +65,7 @@ class Testsuite
 	def execute_testcases
 		# skip all if startup failed
 		if @startup.result == Testcase::FAIL
-			@skipped.concat(@testcases)
+			@skipped_count += 1
 			return
 		end
 
@@ -86,14 +86,14 @@ class Testsuite
 			testcase.execute
 			# if no exception was raised, testcase passed
 			testcase.result = Testcase::PASS
-			@passed << testcase
+			@passed_count += 1
 			log(testcase.footer)
 			@log.testcase = nil
 			return true
 		rescue RuntimeError, Failure => error
 			testcase.result = Testcase::FAIL
 			testcase.error = error
-			@failed << testcase
+			@failed_count += 1
 			log_error(error)
 			log(testcase.footer)
 			return false
@@ -128,6 +128,28 @@ class Testsuite
 			testsuite_xml.add(@cleanup.to_junit_xml)
 		end
 		return testsuite_xml
+	end
+
+	def store_results
+		# Create Hash {:testcase_name => serialized_results}
+		testcases_serialized = Hash.new
+		testcases_serialized[@startup.name] = @startup.store_results
+		@testcases.each do |testcase|
+			testcases_serialized[testcase.name] = testcase.store_results
+		end
+		testcases_serialized[@cleanup.name] = @cleanup.store_results
+		return Marshal.dump([testcases_serialized, @passed_count, @failed_count, @skipped_count])
+	end
+
+	def load_results(string)
+		# Reload values of passed, failed and skipped
+		testcases_serialized, @passed_count, @failed_count, @skipped_count = Marshal.load(string)
+		# Reload results of all testcases
+		@startup.load_results(testcases_serialized[@startup.name])
+		@testcases.each do |testcase|
+			testcase.load_results(testcases_serialized[testcase.name])
+		end
+		@cleanup.load_results(testcases_serialized[@cleanup.name])
 	end
 
 	private
