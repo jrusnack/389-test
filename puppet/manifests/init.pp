@@ -9,3 +9,5 @@ file { '/etc/motd':
               Managed by Puppet.\n"
 }
 
+include environment
+include directory
