@@ -1,0 +1,45 @@
+389-test framework
+==================
+
+389-test is a Ruby framework for testing 389 Directory Server. It has 
+been designed to be a feature-rich replacement for tet, that has been 
+used so far.
+
+Features
+--------
+
+* Domain specific language for testsuite and testcase definition
+* Parametrized testcases
+* Parallel execution of testsuites
+* Export of results into XML (multiple formats)
+* .. and more (see DESIGN document)
+
+Requirements
+------------
+
+* Ruby (so far tested on ruby 1.9.3p362)
+* Run as root or user with sudo rights. When using sudo, either run
+  testsuites sequentially or make sure user can sudo without being 
+  prompted for a password
+
+Testing
+-------
+
+	bin/engage
+
+will run the tests.
+
+Contributing
+------------
+
+The framework is under development right now. There are several ways how 
+to contribute:
+* open issues on GitHub for bugs or enhancements
+* write new testsuites
+* write wrapper functions for working with DS
+
+Contributors
+------------
+
+* Jan Rusnacko <rusnackoj@gmail.com>
+* Milan Kubik <admin@kubikmilan.sk> 

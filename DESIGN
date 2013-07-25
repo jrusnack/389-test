@@ -1,0 +1,121 @@
+
+Overview
+--------
+
+The framework is designed to be a replacement of tet, and should avoid it`s weaknesses. These include:
+  * many side effects and cross-dependencies
+  * poor logging - logs are split to two files, do not have timestamps, no XML reports etc.
+  * difficult debugging - hard to distinguish failure in the framework form failure in test logic
+  * extremely difficult to customize - it has been unmaintained for a long time
+
+Following are the design goals of the framework:
+  1) clean syntax, brief and concise testcases
+  2) improved logging and debugging
+  3) eliminate dependencies between testsuites
+  4) extensible and feature rich
+
+Design of the framework
+-------------------
+
+To achieve abovementioned design goals, framework has following features:
+
+1) a) Domain Specific Language for testsuite and testcase definition
+   b) Wrapper functions to hide some of the complexity of Directory Server and Ruby syntax
+   c) Parametrized testcases to further simplify test logic
+
+2) a) Timestamped logs
+   b) Logging is defined by framework, not testsuite/testcase specific
+   c) 3 kinds of exceptions to help identify the cause quickly:
+        * for framework failures
+        * for failures in wrapper functions
+        * for failed assertions
+   d) Assertions must have a message with comment, which helps debugging the failures
+
+3) a) Parallel execution of testsuites
+   b) Object oriented design: each testsuite and testcase is a separate object with variables encapsulated
+   c) Thread-safe function for creating new DS instance
+
+4) a) Testsuites and testcases can be configured with options
+   b) Results can be exported into custom XML format and Jenkins-accepted JUnit format
+
+Rationale and implementation of the features
+--------------------------------------------
+
+1) a) Tests should be as human readable as possible without uncesessary syntactic mess from the language 
+      they are implemented in. DSL for testsuites and testcases will hide some of the Ruby complexity and
+      make tests look nice.
+   b) Frequently used actions that modify DS should have a wrapper function, that would:
+       * simplify the job of tester
+       * simplify maintenance - kept in one place
+       * unify logging and debugging
+   c) Sometimes, it is necessary to write very similar tests, e.g. to test multiple attributes. The tests 
+      may have the same logic, but run with different data. Other example is testing one attribute with
+      multiple values and expect different outcome.
+
+      To simplify the job of tester and make testcases cleaner and more compact, they can be parametrized.
+      Example speaks for itself:
+
+      testcase "Test PAM passthrough attributes"
+          with 'pamMissingSuffix', 'invalid', 53
+          with 'pamFallback', 'invalid', 21
+          with 'pamSecure', 'TRUE', 0
+          run do |attribute, value, expected_rc|
+              input = <<-EOF
+                  dn: cn=PAM Pass Through Auth,cn=plugins,cn=config
+                  changetype: modify
+                  replace: #{attribute}
+                  #{attribute}: #{value}
+              EOF
+              @directory_server.ldapmodify_r(input)
+              assert_equal("Replacing #{attribute} with #{value} should return #{expected_rc}", $?.exitstatus, expected_rc)
+          end
+
+      Code of the testcase looks, and behaves, like a function. It takes 3 parameters: attribute, value and expected_rc.
+      When this testcase is run, it will be executed 3 times - first time, the code will be called with parameters
+      'pamMissingSuffix', 'invalid', 53; then with 'pamFallback', 'invalid', 21 etc. 
+
+2) a) It is sometimes necessary to corellate lines in log with messages in Directory Server log. Timestamps are therefore a must.
+   b) Since logging methods are defined globally, tester does not have to bother with timestamps, formatting etc. Also,
+      logs look cleaner, testcases are visually separated and log messages can be annotated - all of these help when looking at
+      the log.
+   c) In tet, tester has many functions to set the result of the testcase, which may make testcase look inconsistent. 
+      On the other hand, commands are not checked and when testcase fails, tester has to determine, whether:
+        * the failure originated in framework itself (like environment variables not accessible from super-shell)
+        * one of the commands in testcase failed (eg. poorly written test)
+        * the failure originated in DS (a bug)
+      It is therefore helpful to destinguish between these. 
+
+      First, there is no explicit function to set the result of the testcase. If all of the commands execute succesfully 
+      (all commands and asserts), the testcase passes. If assertion fails, it generates exception of class Failure - it 
+      is caught, result of testcase is set to fail and the exception is logged properly. If a command fails, it should 
+      raise RuntimeError - it is also caught, testcase will fail and exception is logged properly. However, if any other
+      exception is raised anywhere during execution, it is not caught and the tests will abort. This follows "Fail early"
+      logic.
+
+      Following this rule, when implementing wrapper functions for DS it is necessary to raise RuntimeError if the command 
+      fails. For example, when we execute @directory_server.restart and instance does not restart, we should raise an
+      exception. Otherwise, tester would have to write assertion to make sure DS instance restarted properly.
+
+      Only exception to the above rule are ldapclient wrappers. If exception was raised everytime when ldapmodify returns
+      non-zero return code, it would make life of tester miserable. Therefore, return codes of calls to ldapsearch, ldapmodify
+      ... wrappers must be checked (using assert) explicitly.
+   d) Sometimes, tet logs contain messages like RESULT: FAIL with no other explanation. To force tester to write testcases 
+      that would generate useful logs, each assert statement must have a meaningful message, which helps debugging in case
+      of failure. 
+
+3) a) Parallel execution of testsuites makes tests run faster. However, there is another advantage: when writing testsuite,
+      tester is aware that the testsuite may run along with others, in non-deterministic order. If the testsuite is poorly
+      written and depends either on other testsuites or on the order of execution (which is sometimes the case in tet), it
+      will show up early and often. However, tester can specify that testsuite cannon be executed in parallel with others
+      by specifying :parallelizable => false option.
+   b) Object oriented programming allows us to encapsulate all variables within the context they have a meaning. This should
+      address issue of global variables in the beginning of each testsuite in tet, that difficult to maintain and may be
+      rewritten unexpectedly.
+   c) To simplify job of tester of writing parallel testsuites, we implement DirectoryServer.get_instance function. It is
+      guaranteed to create a new directory server instance - it chooses unused name and port and prevents these types of 
+      conflict. 
+4) a) Testcases and testsuite can be configured with options, which gives is a lot of freedom when implementing new
+      features. Right now, it is used to implement parametrized testcases, and also to allow tester to specify, whether
+      the testsuite can be run in parallel with others.
+   b) Export into XML format can be helpful for integration with other tools. For example, when results are exported into
+      JUnit formatted XML, they can be processed by Jenkins.
