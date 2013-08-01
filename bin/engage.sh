@@ -4,7 +4,7 @@
 BIN_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Install ruby
-$BIN_PATH/check_and_install_ruby.sh &> /dev/null
+$BIN_PATH/check_and_install_ruby.sh
 source ~/.rvm/scripts/rvm
 
 # Execute tests

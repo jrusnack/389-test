@@ -29,13 +29,16 @@ class Controller
 		@environment.execute_startup
 		@environment.execute_testcases
 
-		case @configuration.execution
-		when :parallel
-			run_testsuites_concurrently
-		when :sequential
-			run_testsuites_sequentially
-		else
-			raise RuntimeError.new("Unknown configuration.execution: #{@configuration.execution}")
+		# Only if startup and all testcases passed, execute testsuites
+		if @environment.failed_count == 0 then
+			case @configuration.execution
+			when :parallel
+				run_testsuites_concurrently
+			when :sequential
+				run_testsuites_sequentially
+			else
+				raise RuntimeError.new("Unknown configuration.execution: #{@configuration.execution}")
+			end
 		end
 		
 		@environment.execute_cleanup

@@ -198,7 +198,7 @@ class Testsuite
 	# Functions used in tests #
 
 	def assert(message, condition)
-		if condition == true
+		if condition
 			@log.info(message, 'PASS')
 		else
 			raise Failure.new(message)
