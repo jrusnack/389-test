@@ -4,13 +4,14 @@ require "test_framework/failure"
 require "rexml/element"
 require 'util/log'
 require 'util/os'
+require 'util/timer'
 require 'ldap/ldap'
 
 class Testsuite
 	include LogMixin
 	include OS
 	include Ldap
-	attr_reader :name, :passed_count, :failed_count, :skipped_count, :options
+	attr_reader :name, :passed_count, :failed_count, :skipped_count, :options, :duration
 
 	class Builder
 
@@ -49,12 +50,15 @@ class Testsuite
 		@passed_count = 0
 		@failed_count = 0
 		@skipped_count = 0
+		@duration = nil
 	end
 
 	def execute
+		timer = Timer.new.start
 		execute_startup
 		execute_testcases
 		execute_cleanup
+		@duration = timer.get_time
 	end
 
 	def execute_startup
@@ -80,6 +84,7 @@ class Testsuite
 	end
 
 	def run_testcase(testcase)
+		timer = Timer.new.start
 		begin
 			@log.testcase = testcase
 			log(testcase.header)
@@ -97,6 +102,8 @@ class Testsuite
 			log_error(error)
 			log(testcase.footer)
 			return false
+		ensure
+			testcase.duration = timer.get_time
 		end
 	end
 
@@ -118,6 +125,7 @@ class Testsuite
 	def to_junit_xml
 		testsuite_xml = REXML::Element.new("testsuite")
 		testsuite_xml.add_attribute('name', @name)
+		testsuite_xml.add_attribute('time', @duration)
 		if @startup
 			testsuite_xml.add(@startup.to_junit_xml)
 		end
@@ -138,12 +146,12 @@ class Testsuite
 			testcases_serialized[testcase.name] = testcase.store_results
 		end
 		testcases_serialized[@cleanup.name] = @cleanup.store_results
-		return Marshal.dump([testcases_serialized, @passed_count, @failed_count, @skipped_count])
+		return Marshal.dump([testcases_serialized, @passed_count, @failed_count, @skipped_count, @duration])
 	end
 
 	def load_results(string)
 		# Reload values of passed, failed and skipped
-		testcases_serialized, @passed_count, @failed_count, @skipped_count = Marshal.load(string)
+		testcases_serialized, @passed_count, @failed_count, @skipped_count, @duration = Marshal.load(string)
 		# Reload results of all testcases
 		@startup.load_results(testcases_serialized[@startup.name])
 		@testcases.each do |testcase|

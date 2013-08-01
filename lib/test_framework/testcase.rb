@@ -1,7 +1,7 @@
 
 class Testcase
 	attr_reader :name
-	attr_accessor  :output, :result, :error
+	attr_accessor  :output, :result, :error, :duration
 
 	UNKNOWN = "UNKNOWN"
 	PASS 	= "PASS"
@@ -49,6 +49,7 @@ class Testcase
 		@output = ""
 		@error = nil
 		@result = UNKNOWN
+		@duration = nil
 	end
 
 	# Executes the associated code, which will run within the context of caller,
@@ -68,8 +69,13 @@ class Testcase
 
 	def to_junit_xml
 		testcase_xml = REXML::Element.new('testcase')
-		testcase_xml.add_attribute('name', @name)
+		if @parameters then
+			testcase_xml.add_attribute('name', @name + " with " + @parameters.inspect)
+		else
+			testcase_xml.add_attribute('name', @name)
+		end
 		testcase_xml.add_attribute('classname', @testsuite_name)
+		testcase_xml.add_attribute('time', @duration)
 		if @result == FAIL
 			if @error.class == Failure
 				error_xml = REXML::Element.new('failure')
@@ -87,11 +93,11 @@ class Testcase
 	end
 
 	def store_results
-		return Marshal.dump([output, error, result])
+		return Marshal.dump([output, error, result, duration])
 	end
 
 	def load_results(string)
-		@output, @error, @result = Marshal.load(string)
+		@output, @error, @result, @duration = Marshal.load(string)
 	end
 
 	def header
