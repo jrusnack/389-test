@@ -18,8 +18,8 @@ class Configuration
 		# Reports
 		@write_xml_report 	= true
 		@write_junit_report = true
-		@xml_report_file	= @output_directory + "/results.xml"
-		@junit_report_file	= @output_directory + "/junit.xml"
+		@xml_report_file	= "results.xml"
+		@junit_report_file	= "junit.xml"
 
 		# Execute multiple testsuites concurrently by default
 		@execution = :parallel

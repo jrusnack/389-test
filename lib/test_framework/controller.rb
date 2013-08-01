@@ -45,8 +45,12 @@ class Controller
 	end
 
 	def write_reports
-		write_xml_report(@configuration.xml_report_file) if @configuration.write_xml_report
-		write_junit_report(@configuration.junit_report_file) if @configuration.write_junit_report
+		if @configuration.write_xml_report then
+			write_xml_report(@configuration.output_directory + "/" + @configuration.xml_report_file)
+		end
+		if @configuration.write_junit_report
+			write_junit_report(@configuration.output_directory + "/" + @configuration.junit_report_file)
+		end
 	end	
 
 	private
