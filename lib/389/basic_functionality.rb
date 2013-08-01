@@ -84,7 +84,10 @@ class DirectoryServer < LdapServer
 
     # Executes remove-ds.pl script on instance.
     def remove
+        # Mutex to prevent running semanage multiple times at any moment
+        @@setup_instance_mutex.acquire
         sh "sudo remove-ds.pl -i slapd-#{@name}"
+        @@setup_instance_mutex.release
         if ! $?.success?
             raise RuntimeError.new("Error occurred while removing instance. Return code: #{$?.exitstatus}")
         end
