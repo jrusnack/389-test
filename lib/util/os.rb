@@ -16,15 +16,9 @@ module OS
         return get_fqdn.partition('.')[0]
     end
 
-    # Returns FQDN of host (also checks that FQDN is pingable).
+    # Returns FQDN of host
     def get_fqdn
-        fqdn = `hostname -f`
-        # Try pinging hostname (packet count 1, timeout 2 sec)
-        `ping -w 2 -c 1 #{fqdn}`
-        if $? != 0 then 
-            raise RuntimeError.new("Cannot ping own hostname. Make sure \'ping \`hostname\`\' works.")
-        end
-        return fqdn
+        return `hostname -f`
     end
 
     # Returns name of current user
