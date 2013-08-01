@@ -17,7 +17,6 @@ Features
 Requirements
 ------------
 
-* Ruby (so far tested on ruby 1.9.3p362)
 * Run as root or user with sudo rights. When using sudo, either run
   testsuites sequentially or make sure user can sudo without being 
   prompted for a password

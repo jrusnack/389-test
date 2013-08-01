@@ -3,7 +3,7 @@
 require 'pathname'
 require 'fileutils'
 
-# add self to libpath
+# add framework to libpath
 $:.unshift File.expand_path("../../lib", Pathname.new(__FILE__).realpath)
 
 require 'test_framework/controller'
