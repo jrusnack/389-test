@@ -17,14 +17,12 @@ Features
 Requirements
 ------------
 
-* Run as root or user with sudo rights. When using sudo, either run
-  testsuites sequentially or make sure user can sudo without being 
-  prompted for a password
+* Run as root or user with sudo rights.
 
 Testing
 -------
 
-	bin/engage
+	bin/engage.sh
 
 will run the tests.
 
