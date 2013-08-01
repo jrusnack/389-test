@@ -5,7 +5,7 @@ require "389/directory_server"
 SUFFIX="dc=example,dc=com"
 
 testsuite "basic"
-	options :parallelizable => :false 
+	options :parallelizable => :true 
 	testcases do
 
 	startup do

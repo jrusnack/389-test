@@ -3,7 +3,7 @@ require "test_framework/dsl"
 require "389/directory_server"
 
 testsuite "replication"
-	options :parallelizable => :false
+	options :parallelizable => :true
 	testcases do
 
 	startup do

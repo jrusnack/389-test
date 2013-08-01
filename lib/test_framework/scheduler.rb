@@ -10,7 +10,7 @@ class Scheduler
         @parallel_testsuites = Array.new
         # Testsuite that does not have :parallelizable specified is parallelizable by default
         @testsuites.each do |testsuite|
-            if testsuite.options[:parallelizable] == false
+            if testsuite.options[:parallelizable] == :false
                 @sequential_testsuites << testsuite
             else
                 @parallel_testsuites << testsuite
