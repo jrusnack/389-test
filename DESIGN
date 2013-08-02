@@ -2,7 +2,7 @@
 Overview
 --------
 
-The framework is designed to be a replacement of tet, and should avoid it`s weaknesses. These include:
+Currently used testing framework tet has several disadvantages that we would like to avoid, including:
   * many side effects and cross-dependencies
   * poor logging - logs are split to two files, do not have timestamps, no XML reports etc.
   * difficult debugging - hard to distinguish failure in the framework form failure in test logic

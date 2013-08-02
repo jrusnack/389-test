@@ -19,12 +19,17 @@ Requirements
 
 * Run as root or user with sudo rights.
 
-Testing
+Running
 -------
 
 	bin/engage.sh
 
 will run the tests.
+
+Known issues
+------------
+Parallel execution of multiple testsuites does not work on Jenkins. See
+https://wiki.jenkins-ci.org/display/JENKINS/Spawning+processes+from+build
 
 Contributing
 ------------

@@ -1,0 +1,78 @@
+
+How to write a new testsuite
+============================
+
+Introduction
+-----------
+Testsuites are collections of testcases which all correspond to a certain 
+feature of DS. Testsuite should be standalone and independent from other 
+testsuites. 
+
+Each testsuite should have a startup and cleanup. Startup should be used to 
+prepare environment for the testcases that follow. Cleanup should be used to 
+clean up after testsuite execution. If startup fails, testcases are not executed
+and run continues with the cleanup.
+
+Testcases are executed sequentially in the order they are defined. There is no
+way to re-order them, so when one looks at the testsuite, the order in which 
+testcases are executed is obvious.
+
+Adding new testsuite to execution
+---------------------------------
+To add new testsuite, simply put it in the test folder. Upon startup, instance 
+of TestsuiteExplorer (see lib/util/testsuite_explorer) looks at the folder and
+searches for all files that implement testsuites. Currently, it just greps 
+'testsuite' and if it`s present, it assumes the file contains implementation
+of the testsuite.
+
+Structure of the testsuite
+--------------------------
+
+The simplest testsuite looks like this:
+
+    require "test_framework/dsl"
+
+    testsuite "Simple"
+
+        testcases do
+            # put testcases here
+        end
+
+Keyword 'testsuite' is followed by the name of the testsuite. Keyword 
+'testcases' is followed by the block (do-end), which contains startup, testcases
+and cleanup. Require statement loads file ("test_framework/dsl") that implements
+domain specific language used to define testsuites. In fact, keywords 'testsuite'
+and 'testcases' are methods implemented in test_framework/dsl. This statement
+is therefore required in every testsuite.
+
+It is also useful to include wrapper functions for working with DS. To do this,
+just require file "389/directory_server". 
+
+To further customize behaviour of testsuites, it is possible to specify options
+for each testsuite. Keyword 'options' is used, right after the name of the
+testsuite. Right now, the only option available is :parallelizable, which can
+have values :true and :false. By default, every testsuite is parallelizable. 
+The 'options' statement expects has of options in format:
+
+    options :option1 => value1, :option2 => value2 ...
+
+NOTE: The order of options and testcases, as well as the indentation is not 
+enforced, but it is strongly advised to follow existing examples. In future,
+this should be enforced by coding guidelines.
+
+Writing wrapper and helper functions
+------------------------------------
+To simplify writing testcases, wrapper functions to handle DS functionality and
+helper functions (that simplify tests, like populate_db_with_users) should be 
+used often. 
+
+Wrapper functions to deal with DS are methods of class DirectoryServer. To 
+organize them, whole class DirectoryServer is actually split into several files.
+Each file contains functions related to certain functionality of DS. All these
+files are then included in directory_server file. All files containing 
+implementation of DS can be found under lib/389 folder.
+
+Helper functions are usually testsuite-specific. Tester will usually create 
+a separate file called <testsuite-name>-lib.rb and put it in the directory along
+with the implementation of testsuite. Actual implementation should be a Ruby 
+module, to avoid any conflicts in namespaces. 
