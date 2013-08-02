@@ -2,7 +2,7 @@
 
 # Check if ruby is installed
 if /usr/bin/env ruby -v | grep 1.9.3 > /dev/null; then
-	exit 0
+    exit 0
 fi
 
 # Download and install RVM

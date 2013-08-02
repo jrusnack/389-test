@@ -20,7 +20,8 @@ class DirectoryServer < LdapServer
         EOF
         log self.ldapadd_r(input)
         if ! $?.success? then
-            raise RuntimeError.new("Failed to add replication manager \"#{dn}\" with password #{password}. Return code: #{$?.exitstatus}")
+            raise RuntimeError.new("Failed to add replication manager \"#{dn}\" \
+                with password #{password}. Return code: #{$?.exitstatus}")
         end
     end
 
@@ -35,7 +36,8 @@ class DirectoryServer < LdapServer
             nsslapd-changelogmaxage: 10d
         EOF
         if ! $?.success? then
-            raise RuntimeError.new("Failed to add changelog \'#{dir}\'. Return code: #{$?.exitstatus}")
+            raise RuntimeError.new("Failed to add changelog \'#{dir}\'. \
+                Return code: #{$?.exitstatus}")
         end
     end
 
@@ -43,7 +45,8 @@ class DirectoryServer < LdapServer
         log "Enabling supplier: suffix #{suffix} with id #{id}"
         enable_replica(suffix, id, 3, 1)
         if ! $?.success? then
-            raise RuntimeError.new("Failed to enable supplier: suffix #{suffix} with id #{id}. Return code: #{$?.exitstatus}")
+            raise RuntimeError.new("Failed to enable supplier: suffix #{suffix} with id #{id}. \
+                Return code: #{$?.exitstatus}")
         end
     end
 
@@ -51,7 +54,8 @@ class DirectoryServer < LdapServer
         log "Enabling consumer: suffix #{suffix} with id #{id}"
         enable_replica(suffix, id, 2, 0)
         if ! $?.success? then
-            raise RuntimeError.new("Failed to enable consumer: suffix #{suffix} with id #{id}. Return code: #{$?.exitstatus}")
+            raise RuntimeError.new("Failed to enable consumer: suffix #{suffix} with id #{id}. \
+                Return code: #{$?.exitstatus}")
         end
     end
 
@@ -59,7 +63,8 @@ class DirectoryServer < LdapServer
         log "Enabling hub: suffix #{suffix} with id #{id}"
         enable_replica(suffix, id, 2, 1)
         if ! $?.success? then
-            raise RuntimeError.new("Failed to enable hub: suffix #{suffix} with id #{id}. Return code: #{$?.exitstatus}")
+            raise RuntimeError.new("Failed to enable hub: suffix #{suffix} with id #{id}. \
+                Return code: #{$?.exitstatus}")
         end
     end
 

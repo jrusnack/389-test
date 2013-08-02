@@ -22,7 +22,7 @@ Requirements
 Running
 -------
 
-	bin/engage.sh
+    bin/engage.sh
 
 will run the tests.
 
