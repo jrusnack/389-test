@@ -1,4 +1,5 @@
 require 'ldap/ldapclients'
+require 'util/string'
 
 class LdapServer
 
@@ -24,7 +25,7 @@ class LdapServer
     # This is a generic ldapmodify method. Note that this is instance method,
     # and so it performs ldapmodify against DS instance it is called on. You 
     # can specify :port, but :host will be overwritten. See implementation.
-    def ldapmodify( input="", options={}, version_to_use = :default)
+    def ldapmodify(input="", options={}, version_to_use = :default)
         opt = options.clone                         # Clone, not to rewrite original params
         opt[:host] = @host                          # Set host, rewrite even when specified
         opt[:port] = @port if !opt.has_key?(:port)  # Set port, if not set already
@@ -39,6 +40,16 @@ class LdapServer
         opt[:host] = @host                          # Set host, rewrite even when specified
         opt[:port] = @port if !opt.has_key?(:port)  # Set port, if not set already
         Ldapclients::ldapadd(input, opt, version_to_use)
+    end
+
+    # This is a generic ldapdelete method. Note that this is instance method,
+    # and so it performs ldapdelete against DS instance it is called on. You 
+    # can specify :port, but :host will be overwritten. See implementation.
+    def ldapdelete(input="", options={}, version_to_use = :default)
+        opt = options.clone                         # Clone, not to rewrite original params
+        opt[:host] = @host                          # Set host, rewrite even when specified
+        opt[:port] = @port if !opt.has_key?(:port)  # Set port, if not set already
+        Ldapclients::ldapdelete(input, opt, version_to_use)
     end
 
     # Ldapsearch as root
@@ -65,23 +76,20 @@ class LdapServer
         ldapadd(input, opt)
     end
 
+    # Ldapdelete as root
+    def ldapdelete_r(input, options={})
+        opt = options.clone
+        opt[:bind_dn] = @root_dn
+        opt[:bind_pw] = @root_pw
+        ldapdelete(input, opt)
+    end
+
     # Bind as root and get value of attribute on entry
     # Returns single value or array of multiple values
     def get_attribute(attribute, entry)
         log "Getting attribute #{attribute} from entry #{entry}"
-        values = ldapsearch_r({:base => "#{entry}", :scope => 'base', :attributes => "#{attribute}",\
-            :other => '-LLL'}).strip.lines.to_a.map{|line| line.gsub(/^#{attribute}: (.*)$/, '\1').chomp}
-        case 
-        # Multiple values
-        when values.size > 2
-            return values[1..values.size]
-        # Single value
-        when values.size == 2
-            return values[1]
-        # No value of attribute found
-        else
-            return nil
-        end
+        return ldapsearch_r({:base => "#{entry}", :scope => 'base', :attributes => "#{attribute}",\
+            :other => '-LLL'}).get_attr_value(attribute)
     end
 
 end
