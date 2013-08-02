@@ -143,7 +143,7 @@ class Testsuite
         testcases_serialized = Hash.new
         testcases_serialized[@startup.name] = @startup.store_results
         @testcases.each do |testcase|
-            testcases_serialized[testcase.name] = testcase.store_results
+            testcases_serialized[testcase.unique_name] = testcase.store_results
         end
         testcases_serialized[@cleanup.name] = @cleanup.store_results
         return Marshal.dump([testcases_serialized, @passed_count, @failed_count, @skipped_count, @duration])
@@ -155,7 +155,7 @@ class Testsuite
         # Reload results of all testcases
         @startup.load_results(testcases_serialized[@startup.name])
         @testcases.each do |testcase|
-            testcase.load_results(testcases_serialized[testcase.name])
+            testcase.load_results(testcases_serialized[testcase.unique_name])
         end
         @cleanup.load_results(testcases_serialized[@cleanup.name])
     end

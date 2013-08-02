@@ -1,9 +1,7 @@
 389-test framework
 ==================
 
-389-test is a Ruby framework for testing 389 Directory Server. It has 
-been designed to be a feature-rich replacement for tet, that has been 
-used so far.
+389-test is a Ruby framework for testing 389 Directory Server. 
 
 Features
 --------

@@ -110,4 +110,8 @@ class Testcase
     def footer
         return "RESULT: #{@result}"
     end
+
+    def unique_name
+        @parameters ? "#{@name}-#{@parameters.inspect}" : "#{name}"
+    end
 end
