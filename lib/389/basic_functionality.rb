@@ -9,9 +9,9 @@ class DirectoryServer < LdapServer
         @@setup_instance_mutex.acquire
         params[:port] = get_free_port
         params[:name] = self.get_unused_instance_name
+        @@setup_instance_mutex.release
         new_instance = self.new(log, params)
         new_instance.setup
-        @@setup_instance_mutex.release
         return new_instance
     end
 
@@ -75,7 +75,9 @@ class DirectoryServer < LdapServer
         config_file = get_tmp_file
         File.open(config_file, "w+") {|file| file.write(config)}
 
+        @@setup_instance_mutex.acquire
         sh "sudo setup-ds.pl -s -f #{config_file}"
+        @@setup_instance_mutex.release
         
         if ! $?.success? then
             raise RuntimeError.new("Failed to create new instance. Return code: #{$?.exitstatus}")
