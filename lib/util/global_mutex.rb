@@ -10,9 +10,9 @@ class GlobalMutex
     end
 
     def acquire
-        sleep (rand(1000) / 1000.0)
+        sleep (rand(2000) / 1000.0)
         while File.exists?(@lockfile)
-            sleep (0.5 + rand(1000)/1000.0)
+            sleep (0.5 + rand(2000)/1000.0)
         end
         FileUtils.touch(@lockfile)
     end

@@ -76,7 +76,7 @@ class Testsuite
     def execute_testcases
         # skip all if startup failed
         if @startup.result == Testcase::FAIL
-            @skipped_count += 1
+            @skipped_count += @testcases.size
             return
         end
 
@@ -176,6 +176,25 @@ class Testsuite
             testcase.load_results(testcases_serialized[testcase.unique_name])
         end
         @cleanup.load_results(testcases_serialized[@cleanup.name])
+    end
+
+    def testcase_count
+        count = @testcases.size
+        count += 1 if @startup
+        count += 1 if @cleanup
+        return count
+    end
+
+    def passed_percent
+        return @passed_count*100/Float(testcase_count)
+    end
+
+    def failed_percent
+        return @failed_count*100/Float(testcase_count)
+    end
+
+    def skipped_percent
+        return @skipped_count*100/Float(testcase_count)
     end
 
     private

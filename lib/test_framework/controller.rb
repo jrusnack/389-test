@@ -21,16 +21,18 @@ class Controller
     end 
 
     def execute
+        total_timer = Timer.new.start
+
         # load special Environment testsuite
         require 'test_framework/environment'
         output_file = @configuration.output_directory + "/#{Testsuite::Builder.name}"
         @environment = Testsuite::Builder.get_testsuite(Log.new(output_file), @configuration)
 
         # Execute startup and testcases of Environment before running any other testsuites
-        timer = Timer.new.start
+        environment_timer = Timer.new.start
         @environment.execute_startup
         @environment.execute_testcases
-        @environment.duration = timer.get_time
+        @environment.duration = environment_timer.get_time
 
         # Only if startup and all testcases passed, execute testsuites
         if @environment.failed_count == 0 then
@@ -44,13 +46,15 @@ class Controller
             end
         end
 
-        timer = Timer.new.start
+        environment_timer = Timer.new.start
         @environment.execute_cleanup
-        @environment.duration += timer.get_time
+        @environment.duration += environment_timer.get_time
+
+        @duration = total_timer.get_time
     end
 
     def write_reports
-        report_builder = ReportBuilder.new(@environment, @testsuites)
+        report_builder = ReportBuilder.new(@environment, @testsuites, @duration)
         if @configuration.write_xml_report then
             output_file = @configuration.output_directory + "/" + @configuration.xml_report_file
             File.open(output_file, 'w') {|file| report_builder.get_xml_report.write(file, 4)}
@@ -59,6 +63,7 @@ class Controller
             output_file = @configuration.output_directory + "/" + @configuration.junit_report_file
             File.open(output_file, 'w') {|file| report_builder.get_junit_report.write(file, 4)}
         end
+        puts report_builder.plaintext_summary_report
     end 
 
     private
