@@ -3,6 +3,7 @@ require "test_framework/testsuite"
 require "rexml/document"
 require "rexml/element"
 require "test_framework/scheduler"
+require "test_framework/report_builder"
 
 class Controller
     def initialize(configuration)
@@ -45,11 +46,14 @@ class Controller
     end
 
     def write_reports
+        report_builder = ReportBuilder.new(@environment, @testsuites)
         if @configuration.write_xml_report then
-            write_xml_report(@configuration.output_directory + "/" + @configuration.xml_report_file)
+            output_file = @configuration.output_directory + "/" + @configuration.xml_report_file
+            File.open(output_file, 'w') {|file| report_builder.get_xml_report.write(file, 4)}
         end
-        if @configuration.write_junit_report
-            write_junit_report(@configuration.output_directory + "/" + @configuration.junit_report_file)
+        if @configuration.write_junit_report then
+            output_file = @configuration.output_directory + "/" + @configuration.junit_report_file
+            File.open(output_file, 'w') {|file| report_builder.get_junit_report.write(file, 4)}
         end
     end 
 
@@ -61,26 +65,8 @@ class Controller
         @testsuites << Testsuite::Builder.get_testsuite(Log.new(output_file), @configuration)
     end
 
-    def write_xml_report(output_file)
-        @xml_report = REXML::Document.new
-        @xml_report << REXML::XMLDecl.new
-        results_xml = REXML::Element.new("results")
-        @testsuites.each do |testsuite|
-            results_xml.add(testsuite.to_xml)
-        end
-        @xml_report.add(results_xml)
-        File.open(output_file, 'w') {|file| @xml_report.write(file, 4)}
-    end
-
-    def write_junit_report(output_file)
-        @junit_report = REXML::Document.new
-        @junit_report << REXML::XMLDecl.new
-        testsuites_xml = REXML::Element.new("testsuites")
-        @testsuites.each do |testsuite|
-            testsuites_xml.add(testsuite.to_junit_xml)
-        end
-        @junit_report.add(testsuites_xml)
-        File.open(output_file, 'w') {|file| @junit_report.write(file, 4)}
+    def plaintext_summary_report
+        report = "Results:\n#{"-"}"
     end
 
     def run_testsuites_sequentially
