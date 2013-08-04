@@ -14,6 +14,8 @@ class Testsuite
     attr_reader :name, :passed_count, :failed_count, :skipped_count, :options, :duration
 
     class Builder
+        @@name = nil
+        @@options = nil
 
         def self.name=(name)
             @@name = name
@@ -123,9 +125,16 @@ class Testsuite
     end
 
     def to_junit_xml
+        number_of_tests = @testcases.size
+        number_of_tests += startup ? 1 : 0
+        number_of_tests += cleanup ? 1 : 0
         testsuite_xml = REXML::Element.new("testsuite")
         testsuite_xml.add_attribute('name', @name)
         testsuite_xml.add_attribute('time', @duration)
+        testsuite_xml.add_attribute('tests', number_of_tests)
+        testsuite_xml.add_attribute('passed', @passed_count)
+        testsuite_xml.add_attribute('failed', @failed_count)
+        testsuite_xml.add_attribute('skipped', @skipped_count)
         if @startup
             testsuite_xml.add(@startup.to_junit_xml)
         end
