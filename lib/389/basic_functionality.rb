@@ -7,11 +7,11 @@ class DirectoryServer < LdapServer
     def self.get_instance(log, params={})
         # Mutex to prevent having 2 DS with the same name
         @@setup_instance_mutex.acquire
-        params[:port] = get_free_port
-        params[:name] = self.get_unused_instance_name
-        @@setup_instance_mutex.release
+        params[:port] = get_free_port if params[:port] == nil
+        params[:name] = self.get_unused_instance_name if params[:name] == nil
         new_instance = self.new(log, params)
         new_instance.setup
+        @@setup_instance_mutex.release
         return new_instance
     end
 
@@ -53,6 +53,8 @@ class DirectoryServer < LdapServer
         end
     end
 
+    # Do not use this method, as it is not safe for parallel execution
+    # Use DirectoryServer.get_instance method instead
     def setup
         # Create config for new DS instance
         config = <<-EOF
@@ -75,9 +77,7 @@ class DirectoryServer < LdapServer
         config_file = get_tmp_file
         File.open(config_file, "w+") {|file| file.write(config)}
 
-        @@setup_instance_mutex.acquire
         sh "sudo setup-ds.pl -s -f #{config_file}"
-        @@setup_instance_mutex.release
         
         if ! $?.success? then
             raise RuntimeError.new("Failed to create new instance. Return code: #{$?.exitstatus}")
@@ -148,4 +148,6 @@ class DirectoryServer < LdapServer
             raise RuntimeError.new("Error occurred while adding new user. Return code: #{$?.exitstatus}")
         end
     end
+
+    
 end
