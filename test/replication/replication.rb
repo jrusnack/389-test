@@ -67,6 +67,6 @@ testsuite "replication"
         end
 
     cleanup do
-        @master1.remove
+        @master1.remove if @master1
     end
 end

@@ -93,7 +93,7 @@ class Testcase
     end
 
     def store_results
-        return Marshal.dump([output, error, result, duration])
+        return Marshal.dump([@output, @error, @result, @duration])
     end
 
     def load_results(string)

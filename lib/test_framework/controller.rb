@@ -25,10 +25,12 @@ class Controller
         require 'test_framework/environment'
         output_file = @configuration.output_directory + "/#{Testsuite::Builder.name}"
         @environment = Testsuite::Builder.get_testsuite(Log.new(output_file), @configuration)
-        
+
         # Execute startup and testcases of Environment before running any other testsuites
+        timer = Timer.new.start
         @environment.execute_startup
         @environment.execute_testcases
+        @environment.duration = timer.get_time
 
         # Only if startup and all testcases passed, execute testsuites
         if @environment.failed_count == 0 then
@@ -41,8 +43,10 @@ class Controller
                 raise RuntimeError.new("Unknown configuration.execution: #{@configuration.execution}")
             end
         end
-        
+
+        timer = Timer.new.start
         @environment.execute_cleanup
+        @environment.duration += timer.get_time
     end
 
     def write_reports

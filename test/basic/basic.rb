@@ -106,7 +106,9 @@ testsuite "basic"
         end
 
     cleanup do
-        @directory_server.stop
-        @directory_server.remove
+        if @directory_server
+            @directory_server.stop
+            @directory_server.remove
+        end
     end
 end

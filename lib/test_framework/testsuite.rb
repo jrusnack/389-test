@@ -11,7 +11,8 @@ class Testsuite
     include LogMixin
     include OS
     include Ldap
-    attr_reader :name, :passed_count, :failed_count, :skipped_count, :options, :duration
+    attr_accessor :duration
+    attr_reader :name, :passed_count, :failed_count, :skipped_count, :options
 
     class Builder
         @@name = nil
@@ -65,7 +66,11 @@ class Testsuite
 
     def execute_startup
         log(testsuite_header)
-        run_testcase(@startup) if @startup != nil
+        if @startup != nil
+            timer = Timer.new.start
+            run_testcase(@startup)
+            @startup.duration = timer.get_time
+        end
     end
 
     def execute_testcases
@@ -81,7 +86,11 @@ class Testsuite
     end
 
     def execute_cleanup
-        run_testcase(@cleanup) if @cleanup != nil
+        if @cleanup != nil
+            timer = Timer.new.start
+            run_testcase(@cleanup)
+            @cleanup.duration = timer.get_time
+        end
         log(testsuite_footer)
     end
 
@@ -126,8 +135,8 @@ class Testsuite
 
     def to_junit_xml
         number_of_tests = @testcases.size
-        number_of_tests += startup ? 1 : 0
-        number_of_tests += cleanup ? 1 : 0
+        number_of_tests += 1 if @startup
+        number_of_tests += 1 if @cleanup
         testsuite_xml = REXML::Element.new("testsuite")
         testsuite_xml.add_attribute('name', @name)
         testsuite_xml.add_attribute('time', @duration)
