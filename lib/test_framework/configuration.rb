@@ -13,7 +13,7 @@ class Configuration
         @test_directory     = "#{@root_directory}/test"
 
         # Run all testsuites by default
-        @selection_method   = TestsuiteExplorer::SELECT_ALL
+        @testsuites_to_run  = nil
 
         # Reports
         @write_xml_report   = true

@@ -5,16 +5,15 @@ module TestsuiteExplorer
     SELECT_MANUALLY = :select_manually
 
     def self.get_testsuites_paths(configuration)
-        case configuration.selection_method
-        when SELECT_ALL
+        if configuration.testsuites_to_run == nil
             return discover_testsuites(configuration.test_directory)
-        when SELECT_MANUALLY
-            #TODO
         else
-            raise RuntimeError.new("Unknown testsuite selection method #{configuration.selection_method}.")
+            all_testsuites = discover_testsuites(configuration.test_directory)
+            return filter_testsuites_to_run(all_testsuites, configuration)
         end
     end
 
+    # Returns array of paths of all discovered testsuites
     def self.discover_testsuites(directory)
         testsuites_paths = Array.new
         # loop over all directories containing testsuites
@@ -30,6 +29,17 @@ module TestsuiteExplorer
             end
         end
         return testsuites_paths
+    end
+
+    # Given the array of paths to testsuites, returns array of paths of testsuites
+    # that are to be run according to the configuration.testsuites_to_run
+    def self.filter_testsuites_to_run(testsuites_paths, configuration)
+        testsuites_to_run = Array.new
+        testsuites_paths.each do |testsuite_file|
+            name = File.readlines(testsuite_file).grep(/testsuite/)[0].gsub(/.*testsuite "(.*)"/,'\1').strip
+            testsuites_to_run << testsuite_file if configuration.testsuites_to_run.include?(name)
+        end
+        return testsuites_to_run
     end
 
 end

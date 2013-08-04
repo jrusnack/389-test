@@ -17,6 +17,7 @@ options = Trollop::options do
     opt :output_directory, "Directory with output and reports", :type => :string
     opt :junit_report_file, "Name of junit report file", :type => :string
     opt :xml_report_file, "Name of XML report file", :type => :string
+    opt :testsuites, "String of comma separated testsuite names", :type => :string
     conflicts :parallel, :sequential
 end
 
@@ -27,6 +28,7 @@ config.execution = :parallel if options.parallel
 config.execution = :sequential if options.sequential
 config.junit_report_file = options.junit_report_file if options.junit_report_file
 config.xml_report_file = options.xml_report_file if options.xml_report_file
+config.testsuites_to_run = options.testsuites.split(',') if options.testsuites
 
 controller = Controller.new(config)
 controller.execute
