@@ -1,4 +1,6 @@
 
+require 'util/dependency_checker'
+
 class Testcase
     attr_reader :name
     attr_accessor  :output, :result, :error, :duration
@@ -12,6 +14,7 @@ class Testcase
             @@name = name
             @@testsuite_name = testsuite_name
             @@purpose = nil
+            @@dependencies = nil
             @@all_parameters = Array.new
         end
 
@@ -27,24 +30,29 @@ class Testcase
             @@purpose = purpose
         end
 
+        def self.add_dependencies(dependencies)
+            @@dependencies = dependencies
+        end
+
         def self.create_testcases(&block)
             if @@all_parameters.size == 0
-                return [Testcase.new(@@name, @@testsuite_name, @@purpose, nil, &block)]
+                return [Testcase.new(@@name, @@testsuite_name, @@purpose, nil, @@dependencies, &block)]
             else
                 testcases = Array.new
                 @@all_parameters.each do |parameters|
-                    testcases << Testcase.new(@@name, @@testsuite_name, @@purpose, parameters, &block)
+                    testcases << Testcase.new(@@name, @@testsuite_name, @@purpose, parameters, @@dependencies, &block)
                 end
                 return testcases
             end
         end
     end
 
-    def initialize(name, testsuite_name, purpose, parameters, &code)
+    def initialize(name, testsuite_name, purpose, parameters, dependencies, &code)
         @name = name
         @purpose = purpose
         @testsuite_name = testsuite_name
         @parameters = parameters
+        @dependencies = dependencies
         @code = code
         @output = ""
         @error = nil
@@ -56,6 +64,15 @@ class Testcase
     # not testcase.
     def execute
         @parameters ? @code.call(@parameters) : @code.call
+    end
+
+    def met_dependencies?
+        return true if @dependencies == nil
+        result = true
+        @dependencies.each do |dep|
+            result = false unless DependencyChecker.met_dependency?(dep)
+        end
+        return result
     end
 
     def to_xml

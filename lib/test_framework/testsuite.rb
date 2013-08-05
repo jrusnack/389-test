@@ -95,6 +95,10 @@ class Testsuite
     end
 
     def run_testcase(testcase)
+        if testcase.met_dependencies? == false then
+            @skipped_count += 1
+            return
+        end
         timer = Timer.new.start
         begin
             @log.testcase = testcase
@@ -211,7 +215,7 @@ class Testsuite
     # Functions for setting up the testcase #
 
     def startup(&block)
-        @startup = Testcase.new("startup", @name, nil, nil, &block)
+        @startup = Testcase.new("startup", @name, nil, nil, nil, &block)
         @startup.result = Testcase::PASS    # Passes by default
     end
 
@@ -230,12 +234,16 @@ class Testsuite
         Testcase::Builder.add_purpose(purpose)
     end
 
+    def depends_on(*dependencies)
+        Testcase::Builder.add_dependencies(dependencies)
+    end
+
     def run(&block)
         @testcases.concat(Testcase::Builder.create_testcases(&block))
     end
 
     def cleanup(&block)
-        @cleanup = Testcase.new("cleanup", @name, nil, nil, &block)
+        @cleanup = Testcase.new("cleanup", @name, nil, nil, nil, &block)
         @cleanup.result = Testcase::PASS    # Passes by default
     end
 

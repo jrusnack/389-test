@@ -30,6 +30,7 @@ testsuite "replication-bugzillas"
     # clients should not touch them.
     testcase 'bug974719'
         purpose 'rhds90 crash on tombstone modrdn'
+        depends_on 'bug:974719'
         with 'tuser1', nil,                 1, 53
         with 'tuser2', nil,                 0, 53
         with 'tuser3', 'dc=example,dc=com', 1, 53
