@@ -2,15 +2,15 @@
 require "test_framework/dsl"
 require "389/directory_server"
 
-testsuite "replication"
+testsuite "replication-bugzillas"
     options :parallelizable => :true
     testcases do
 
     startup do
-        @master1 = DirectoryServer.get_instance(@log)
-        @master1.add_replication_manager
-        @master1.enable_changelog
-        @master1.enable_supplier('dc=example,dc=com', 1)
+        @master = DirectoryServer.get_instance(@log)
+        @master.add_replication_manager
+        @master.enable_changelog
+        @master.enable_supplier('dc=example,dc=com', 1)
     end
 
     # The behaviour of modrdn for a tombstone entry is very inconsistent. Modrdn 
@@ -37,13 +37,13 @@ testsuite "replication"
 
         run do |user, new_superior, deleteoldrdn, expected_rc|
             # Add user
-            log @master1.add_user("uid=#{user},ou=people,dc=example,dc=com")
+            log @master.add_user("uid=#{user},ou=people,dc=example,dc=com")
 
             # Delete him to create tombstone entry
-            log @master1.ldapdelete_r("uid=#{user},ou=people,dc=example,dc=com")
+            log @master.ldapdelete_r("uid=#{user},ou=people,dc=example,dc=com")
 
             # Get the nsuniqueid of the tombstone
-            nsuniqueid = @master1.ldapsearch_r(:base => "ou=people,dc=example,dc=com", \
+            nsuniqueid = @master.ldapsearch_r(:base => "ou=people,dc=example,dc=com", \
                 :filter => "(&(objectclass=nstombstone)(uid=#{user}))", :attributes => 'nsuniqueid').get_attr_value('nsuniqueid')
             log "nsuniqueid of tombstone is #{nsuniqueid}"
 
@@ -60,13 +60,13 @@ testsuite "replication"
             end
 
             # Try to modrdn and log the output
-            log @master1.ldapmodify_r(input)
+            log @master.ldapmodify_r(input)
 
             # Verify that returned return code is the same as expected return code
             assert_equal("Modrdn on tombstone should be refused with unwilling to perform.", expected_rc, $?.exitstatus)
         end
 
     cleanup do
-        @master1.remove if @master1
+        @master.remove if @master
     end
 end
