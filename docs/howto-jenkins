@@ -2,3 +2,29 @@
 How to set up in Jenkins
 ========================
 
+Prerequisite to running in Jenkins is haveing Git plugin installed, which allows
+to check out the latest version of tests.
+
+Creating a new job is easy:
+* Choose a job name and select Build a free-style software project
+* Under Source Code Management, choose Git and paste repository URL, in this case
+    
+    git@github.com:jrusnack/389-test.git
+
+* Specify a branch you want to build, such as origin/master
+* Add buildstep and choose Execute shell. Type command
+
+    bin/engage.sh --output-directory output --junit-report-file junit.xml --sequential
+
+This will set the output directory to "output" and set the name of JUnit report
+file to junit.xml. Flag --sequential is necessary, as parallel execution is not
+compatible with Jenkins. For details see 
+https://wiki.jenkins-ci.org/display/JENKINS/Spawning+processes+from+build
+
+* Add Post-build action Publish JUnit test result report and in the Test report
+XMLs field fill 
+    
+    output/junit.xml
+
+Jenkins will look in the folder output for file junit.xml, which we specified
+in the Build step.

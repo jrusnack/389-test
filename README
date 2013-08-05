@@ -23,8 +23,8 @@ Running
     bin/engage.sh
 
 will run the tests. Type
-	
-	bin/engage.sh -h
+    
+    bin/engage.sh -h
 
 to see available options.
 
