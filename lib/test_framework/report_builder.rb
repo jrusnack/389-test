@@ -36,9 +36,10 @@ class ReportBuilder
 
     def plaintext_summary_report
         report = "\n"
-        format = "%-12s  %6s  %8s  %6s  %8s  %7s  %9s\n"
+        longest_name = get_longest_testsuite_name
+        format = "%-#{longest_name + 1}s  %6s  %8s  %6s  %8s  %7s  %9s\n"
         report << sprintf(format,"Testsuite","Passed", "Passed %", "Failed", "Failed %", "Skipped", "Skipped %")
-        report << "-"*68 << "\n"
+        report << "-"*(57 + longest_name) << "\n"
 
         report << sprintf(format, @environment.name, @environment.passed_count, 
             @environment.passed_percent.to_s[0..4], @environment.failed_count,
@@ -57,11 +58,21 @@ class ReportBuilder
             total_skipped += testsuite.skipped_count
             total_tests += testsuite.testcase_count
         end
-        report << "-"*68 << "\n"
+        report << "-"*(57 + longest_name) << "\n"
         report << sprintf(format, "Total", total_passed, (total_passed*100/Float(total_tests)).to_s[0..4], 
             total_failed, (total_failed*100/Float(total_tests)).to_s[0..4], total_skipped,
             (total_skipped*100/Float(total_tests)).to_s[0..4])
         report << "\nDuration: #{@duration} s\n"
         return report
+    end
+
+    def get_longest_testsuite_name
+        max = 11 # length of 'environment'
+        @testsuites.each do |testsuite|
+            if testsuite.name.size > max then
+                max = testsuite.name.size
+            end
+        end
+        return max
     end
 end
