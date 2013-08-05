@@ -37,6 +37,7 @@ To achieve abovementioned design goals, framework has following features:
 
 4) a) Testsuites and testcases can be configured with options
    b) Results can be exported into custom XML format and Jenkins-accepted JUnit format
+   c) Compatible version of Ruby is downloaded and compiled locally before running the tests
 
 Rationale and implementation of the features
 --------------------------------------------
@@ -119,3 +120,5 @@ Rationale and implementation of the features
       the testsuite can be run in parallel with others.
    b) Export into XML format can be helpful for integration with other tools. For example, when results are exported into
       JUnit formatted XML, they can be processed by Jenkins.
+   c) To minimize dependencies, simplify setup and fix the environment, framework checks whether the correct version of Ruby
+      is installed. If not, it downloads, compiles and installs it locally (just for user running the tests).
