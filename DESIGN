@@ -30,6 +30,7 @@ To achieve abovementioned design goals, framework has following features:
         * for failures in wrapper functions
         * for failed assertions
    d) Assertions must have a message with comment, which helps debugging the failures
+   e) Testcases can have dependencies - conditional execution
 
 3) a) Parallel execution of testsuites
    b) Object oriented design: each testsuite and testcase is a separate object with variables encapsulated
@@ -103,6 +104,12 @@ Rationale and implementation of the features
    d) Sometimes, tet logs contain messages like RESULT: FAIL with no other explanation. To force tester to write testcases 
       that would generate useful logs, each assert statement must have a meaningful message, which helps debugging in case
       of failure. 
+   e) Bugs aren`t usually fixed before the testcase is written, so the testcase will fail until the bug is fixed. However,
+      it may take some time and when the number of bugs is high, it may be exhausting to manually check, whether the test
+      failure is due to known bug (that is just not fixed yet) or regression. To solve this, tester may specify dependencies
+      for each testcase. The testcase will be executed when all dependencies are met, otherwise it will be skipped. The 
+      tester may specify, that testcase depends on bugzilla, and it will be executed only when bugzilla has status ON_QA or
+      VERIFIED. 
 
 3) a) Parallel execution of testsuites makes tests run faster. However, there is another advantage: when writing testsuite,
       tester is aware that the testsuite may run along with others, in non-deterministic order. If the testsuite is poorly
