@@ -45,7 +45,8 @@ class Configuration
 
         # Execute multiple testsuites concurrently by default
         @execution = :parallel
-        # @execution = :sequential
+
+        @debug_mode = false
 
         ####################################################################################
 

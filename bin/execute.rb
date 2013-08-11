@@ -41,8 +41,10 @@ options = Trollop::options do
     opt :junit_report_file, "Name of junit report file", :type => :string
     opt :xml_report_file, "Name of XML report file", :type => :string
     opt :testsuites, "String of comma separated testsuite names", :type => :string
+    opt :debug, "Enable debug mode"
     conflicts :parallel, :sequential
 end
+Trollop::die :debug, "requires sequential execution" if options.debug && ! options.sequential
 
 # Set configuration according to the passed arguments
 config = Configuration.new
@@ -52,6 +54,7 @@ config.execution = :sequential if options.sequential
 config.junit_report_file = options.junit_report_file if options.junit_report_file
 config.xml_report_file = options.xml_report_file if options.xml_report_file
 config.testsuites_to_run = options.testsuites.split(',') if options.testsuites
+config.debug_mode = true if options.debug
 
 controller = Controller.new(config)
 controller.execute

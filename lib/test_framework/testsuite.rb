@@ -133,10 +133,15 @@ class Testsuite
             @log.testcase = nil
             return true
         rescue RuntimeError, Failure => error
+            log_error(error)
+            if @configuration.debug_mode
+                log("[DEBUG] Aborting execution - detected failure.")
+                puts "Aborted"
+                exit
+            end
             testcase.result = Testcase::FAIL
             testcase.error = error
             @failed_count += 1
-            log_error(error)
             log(testcase.footer)
             return false
         ensure
