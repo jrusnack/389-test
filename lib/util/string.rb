@@ -36,4 +36,13 @@ class String
             return nil
         end
     end
+
+    # Removes any whitespaces from the beginning and the end of each line of input
+    def strip_lines
+        return self.lines.to_a.map{|line| line.strip}.join("\n")
+    end
+
+    def strip_lines!
+        self.lines.to_a.map!{|line| line.strip}.join("\n")
+    end
 end

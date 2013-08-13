@@ -75,23 +75,43 @@ class Testsuite
         @passed_count = 0
         @failed_count = 0
         @skipped_count = 0
-        @duration = nil
     end
 
     def execute
-        timer = Timer.new.start
-        execute_startup
-        execute_testcases
-        execute_cleanup
-        @duration = timer.get_time
+        log(testsuite_header)
+        if @configuration.upgrade then
+            # before_upgrade and after_upgrade already executed, instead of startup
+            execute_testcases
+            execute_cleanup
+        else
+            execute_startup
+            execute_testcases
+            execute_cleanup
+        end
+        log(testsuite_footer)
     end
 
     def execute_startup
-        log(testsuite_header)
         if @startup != nil
             timer = Timer.new.start
             run_testcase(@startup)
             @startup.duration = timer.get_time
+        end
+    end
+
+    def execute_before_upgrade
+        if @before_upgrade != nil
+            timer = Timer.new.start
+            run_testcase(@before_upgrade)
+            @before_upgrade.duration = timer.get_time
+        end
+    end
+
+    def execute_after_upgrade
+        if @after_upgrade != nil
+            timer = Timer.new.start
+            run_testcase(@after_upgrade)
+            @after_upgrade.duration = timer.get_time
         end
     end
 
@@ -113,7 +133,6 @@ class Testsuite
             run_testcase(@cleanup)
             @cleanup.duration = timer.get_time
         end
-        log(testsuite_footer)
     end
 
     def run_testcase(testcase)
@@ -152,15 +171,14 @@ class Testsuite
     def to_xml
         testsuite_xml = REXML::Element.new("testsuite")
         testsuite_xml.add(REXML::Element.new("name").add_text(@name))
-        if @startup
-            testsuite_xml.add(@startup.to_xml)
-        end
+        # If testcase has a duration set, it was executed and should be included
+        testsuite_xml.add(@startup.to_xml) if @startup && @startup.duration
+        testsuite_xml.add(@before_upgrade.to_xml) if @before_upgrade && @before_upgrade.duration
+        testsuite_xml.add(@after_upgrade.to_xml) if @after_upgrade && @after_upgrade.duration
         @testcases.each do |testcase|
             testsuite_xml.add(testcase.to_xml)
         end
-        if @cleanup
-            testsuite_xml.add(@cleanup.to_xml)
-        end
+        testsuite_xml.add(@cleanup.to_xml) if @cleanup && @cleanup.duration
         return testsuite_xml
     end
 
@@ -170,20 +188,18 @@ class Testsuite
         number_of_tests += 1 if @cleanup
         testsuite_xml = REXML::Element.new("testsuite")
         testsuite_xml.add_attribute('name', @name)
-        testsuite_xml.add_attribute('time', @duration)
+        testsuite_xml.add_attribute('time', duration)
         testsuite_xml.add_attribute('tests', number_of_tests)
         testsuite_xml.add_attribute('passed', @passed_count)
         testsuite_xml.add_attribute('failed', @failed_count)
         testsuite_xml.add_attribute('skipped', @skipped_count)
-        if @startup
-            testsuite_xml.add(@startup.to_junit_xml)
-        end
+        testsuite_xml.add(@startup.to_junit_xml) if @startup && @startup.duration
+        testsuite_xml.add(@before_upgrade.to_junit_xml) if @before_upgrade && @before_upgrade.duration
+        testsuite_xml.add(@after_upgrade.to_junit_xml) if @after_upgrade && @after_upgrade.duration
         @testcases.each do |testcase|
             testsuite_xml.add(testcase.to_junit_xml)
         end
-        if @cleanup
-            testsuite_xml.add(@cleanup.to_junit_xml)
-        end
+        testsuite_xml.add(@cleanup.to_junit_xml) if @cleanup && @cleanup.duration
         return testsuite_xml
     end
 
@@ -211,7 +227,12 @@ class Testsuite
 
     def testcase_count
         count = @testcases.size
-        count += 1 if @startup
+        if @configuration.upgrade then
+            count += 1 if @before_upgrade
+            count += 1 if @after_upgrade
+        else
+            count += 1 if @startup
+        end
         count += 1 if @cleanup
         return count
     end
@@ -238,12 +259,28 @@ class Testsuite
         "\n" + "#"*20 + " End of #{@name} " + "#"*20
     end
 
+    def duration
+        duration = 0
+        [@startup, @before_upgrade, @after_upgrade, @cleanup].concat(@testcases).each do |tc|
+            duration += tc.duration if tc && tc.duration
+        end
+        return duration
+    end
+
     #########################################
     # Functions for setting up the testcase #
 
     def startup(&block)
         @startup = Testcase.new("startup", @name, nil, nil, nil, &block)
         @startup.result = Testcase::PASS    # Passes by default
+    end
+
+    def before_upgrade(&block)
+        @before_upgrade = Testcase.new("before upgrade", @name, nil, nil, nil, &block)
+    end
+
+    def after_upgrade(&block)
+        @after_upgrade = Testcase.new("after upgrade", @name, nil, nil, nil, &block)
     end
 
     def testcase(testcase_name)

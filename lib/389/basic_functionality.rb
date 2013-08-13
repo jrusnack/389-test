@@ -37,6 +37,11 @@ class DirectoryServer < LdapServer
         return new_instance
     end
 
+    # Returns version of installed DS
+    def self.version
+        return `rpm -qa | grep 389-ds-base-libs`.gsub(/389-ds-base-libs-(.*)/,'\1').strip
+    end
+
     def self.get_unused_instance_name
         1000.times do |i|
             name = get_hostname + "#{i}"

@@ -107,7 +107,7 @@ module Ldapclients
         if options.has_key?(:file) then
             return `#{command} 2>&1`
         else
-            return `#{command} 2>&1 <<EOF\n#{self.sanitize_input(input)}\nEOF`
+            return `#{command} 2>&1 <<EOF\n#{input.strip_lines}\nEOF`
         end
     end
 
@@ -147,7 +147,7 @@ module Ldapclients
         if options.has_key?(:file) then
             return `#{command} 2>&1`
         else
-            return `#{command} 2>&1 <<EOF\n#{self.sanitize_input(input)}\nEOF`
+            return `#{command} 2>&1 <<EOF\n#{input.strip_lines}\nEOF`
         end
     end
 
@@ -182,7 +182,7 @@ module Ldapclients
         end
 
         # Don`t need input when file is specified
-        return `#{command} 2>&1 <<EOF\n#{self.sanitize_input(input)}\nEOF`
+        return `#{command} 2>&1 <<EOF\n#{input.strip_lines}\nEOF`
     end
 
     # Removes any whitespaces from the beginning and the end of each line of input

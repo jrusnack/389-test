@@ -40,9 +40,77 @@ class Controller
         @testsuites_paths.each do |testsuite_path|
             add_testsuite(testsuite_path)
         end
-    end 
+    end
 
     def execute
+        @configuration.repositories.each do |repo|
+            Yum.add_repo(repo)
+        end
+        if @configuration.upgrade then
+            execute_upgrade
+        else
+            execute_normal
+        end
+        @configuration.repositories.each do |repo|
+            Yum.remove_repo(repo)
+        end
+    end
+
+    def execute_upgrade
+        total_timer = Timer.new.start
+
+        # Check whether both packages are available from yum
+        [@configuration.upgrade_from, @configuration.upgrade_to].each do |package|
+            if ! Yum.package_available?(package)
+                puts "Aborting - package #{package} not available."
+                exit
+            end
+        end
+
+        # load special Environment testsuite
+        require 'test_framework/environment'
+        output_file = @configuration.output_directory + "/#{Testsuite::Builder.name}"
+        @environment = Testsuite::Builder.get_testsuite(Log.new(output_file), @configuration)
+
+        # Install version of DS to upgrade from (in Envorinment testsuite)
+        @environment.execute_before_upgrade
+        if @environment.failed_count > 0
+            puts "Aborting - before upgrade of Environment failed"
+            exit
+        end
+
+        # Run before_upgrade of each testsuite - they usually set up their DS instances
+        @testsuites.each do |testsuite|
+            testsuite.execute_before_upgrade
+        end
+
+        # Upgrade installation of DS (in Envorinment testsuite)
+        @environment.execute_after_upgrade
+        @environment.execute_testcases
+        if @environment.failed_count > 0
+            puts "Aborting - testcase in Environment failed."
+            exit
+        end
+
+        # Run after_upgrade of each testsuite
+        @testsuites.each do |testsuite|
+            testsuite.execute_after_upgrade
+        end
+
+        case @configuration.execution
+        when :parallel
+            run_testsuites_concurrently
+        when :sequential
+            run_testsuites_sequentially
+        else
+            raise RuntimeError.new("Unknown configuration.execution: #{@configuration.execution}")
+        end
+
+        @environment.execute_cleanup
+        @duration = total_timer.get_time
+    end
+
+    def execute_normal
         total_timer = Timer.new.start
 
         # load special Environment testsuite
@@ -51,12 +119,10 @@ class Controller
         @environment = Testsuite::Builder.get_testsuite(Log.new(output_file), @configuration)
 
         # Execute startup and testcases of Environment before running any other testsuites
-        environment_timer = Timer.new.start
         @environment.execute_startup
         @environment.execute_testcases
-        @environment.duration = environment_timer.get_time
 
-        # Only if startup and all testcases passed, execute testsuites
+        # Only if startup and all testcases of Environment passed, execute testsuites
         if @environment.failed_count == 0 then
             case @configuration.execution
             when :parallel
@@ -68,10 +134,7 @@ class Controller
             end
         end
 
-        environment_timer = Timer.new.start
         @environment.execute_cleanup
-        @environment.duration += environment_timer.get_time
-
         @duration = total_timer.get_time
     end
 

@@ -27,11 +27,22 @@ require "389/directory_server"
 SUFFIX="dc=example,dc=com"
 
 testsuite "basic"
-    options :parallelizable => :true 
+    options :parallelizable => :true
     testcases do
 
     startup do
         @directory_server = DirectoryServer.get_instance(@log, :suffix => SUFFIX)
+        assert("DS should be running.", @directory_server.running?)
+    end
+
+    before_upgrade do
+        @directory_server = DirectoryServer.get_instance(@log, :suffix => SUFFIX)
+        @directory_server.stop
+        assert("DS should be stopped.",! @directory_server.running?)
+    end
+
+    after_upgrade do
+        @directory_server.start
         assert("DS should be running.", @directory_server.running?)
     end
 

@@ -32,6 +32,7 @@ $:.unshift File.expand_path("../../lib", Pathname.new(__FILE__).realpath)
 require 'test_framework/controller'
 require 'test_framework/configuration'
 require 'util/trollop'
+require 'util/yum'
 
 # Parse command line arguments
 options = Trollop::options do
@@ -42,7 +43,12 @@ options = Trollop::options do
     opt :xml_report_file, "Name of XML report file", :type => :string
     opt :testsuites, "String of comma separated testsuite names", :type => :string
     opt :debug, "Enable debug mode"
+    opt :upgrade, "Enable upgrade testing"
+    opt :upgrade_from, "Version of DS to be upgraded", :type => :string
+    opt :upgrade_to, "Version of DS to upgrade to", :type => :string
+    opt :repository, "Specify comma separated YUM repositories", :type => :string
     conflicts :parallel, :sequential
+    depends :upgrade_to, :upgrade_from, :upgrade
 end
 Trollop::die :debug, "requires sequential execution" if options.debug && ! options.sequential
 
@@ -55,6 +61,10 @@ config.junit_report_file = options.junit_report_file if options.junit_report_fil
 config.xml_report_file = options.xml_report_file if options.xml_report_file
 config.testsuites_to_run = options.testsuites.split(',') if options.testsuites
 config.debug_mode = true if options.debug
+config.upgrade = true if options.upgrade
+config.upgrade_from = options.upgrade_from if options.upgrade_from
+config.upgrade_to = options.upgrade_to if options.upgrade_to
+config.repositories = options.repository.split(',') if options.repository
 
 controller = Controller.new(config)
 controller.execute

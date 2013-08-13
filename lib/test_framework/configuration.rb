@@ -46,7 +46,14 @@ class Configuration
         # Execute multiple testsuites concurrently by default
         @execution = :parallel
 
+        # In debug mode, execution aborts immediately upon first failure
         @debug_mode = false
+
+        # Upgrade testing
+        @upgrade        = false
+        @upgrade_from   = nil
+        @upgrade_to     = nil
+        @repositories   = Array.new
 
         ####################################################################################
 

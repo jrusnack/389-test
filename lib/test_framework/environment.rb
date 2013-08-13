@@ -22,13 +22,25 @@
 # Jan Rusnacko <rusnackoj@gmail.com>
 
 require "test_framework/dsl"
+require "util/yum"
 
 testsuite "environment" 
     testcases do
 
     # Prepares machine for running the tests
     startup do
-        sh "sudo yum -y install 389-ds-base"
+        log Yum.install('389-ds-base')
+    end
+
+    before_upgrade do
+        log Yum.remove('389-*')
+        log Yum.install(@configuration.upgrade_from)
+        log "Directory Server version before upgrade: #{DirectoryServer.version}"
+    end
+
+    after_upgrade do
+        log Yum.install(@configuration.upgrade_to)
+        log "Directory Server version after upgrade: #{DirectoryServer.version}"
     end
 
     # Checks to make sure machine is correctly set up

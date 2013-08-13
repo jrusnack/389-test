@@ -35,6 +35,18 @@ testsuite "replication-bugzillas"
         @master.enable_supplier('dc=example,dc=com', 1)
     end
 
+    before_upgrade do
+        @master = DirectoryServer.get_instance(@log)
+        @master.add_replication_manager
+        @master.enable_changelog
+        @master.enable_supplier('dc=example,dc=com', 1)
+        @master.stop
+    end
+
+    after_upgrade do
+        @master.start
+    end
+
     # The behaviour of modrdn for a tombstone entry is very inconsistent. Modrdn 
     # has two options: deleteoldrdn and newsuperior and the result is different 
     # for different combinations:
@@ -67,7 +79,8 @@ testsuite "replication-bugzillas"
 
             # Get the nsuniqueid of the tombstone
             nsuniqueid = @master.ldapsearch_r(:base => "ou=people,dc=example,dc=com", \
-                :filter => "(&(objectclass=nstombstone)(uid=#{user}))", :attributes => 'nsuniqueid').get_attr_value('nsuniqueid')
+                :filter => "(&(objectclass=nstombstone)(uid=#{user}))", \
+                :attributes => 'nsuniqueid').get_attr_value('nsuniqueid')
             log "nsuniqueid of tombstone is #{nsuniqueid}"
 
             # Create the input for ldapmodify
