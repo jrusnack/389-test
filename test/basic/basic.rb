@@ -26,9 +26,8 @@ require "389/directory_server"
 
 SUFFIX="dc=example,dc=com"
 
-testsuite "basic"
+testsuite "basic" do
     options :parallelizable => :true
-    testcases do
 
     startup do
         @directory_server = DirectoryServer.get_instance(@log, :suffix => SUFFIX)

@@ -22,6 +22,7 @@ To achieve abovementioned design goals, framework has following features:
 1) a) Domain Specific Language for testsuite and testcase definition
    b) Wrapper functions to hide some of the complexity of Directory Server and Ruby syntax
    c) Parametrized testcases to further simplify test logic
+   d) One-testcase-per-file support
 
 2) a) Timestamped logs
    b) Logging is defined by framework, not testsuite/testcase specific
@@ -75,6 +76,29 @@ Rationale and implementation of the features
       Code of the testcase looks, and behaves, like a function. It takes 3 parameters: attribute, value and expected_rc.
       When this testcase is run, it will be executed 3 times - first time, the code will be called with parameters
       'pamMissingSuffix', 'invalid', 53; then with 'pamFallback', 'invalid', 21 etc. 
+    d) When automating tickets, bugzillas, or just writing a quick testcase, it is often easier to create a testcase
+      within separate file, than to look for a suitable testsuite and place to put testcase in. The framework supports 
+      also this style, with marginal difference in syntax.
+
+      File with testsuite                       |   File with testcase
+      ---------------------------------------------------------------------------------
+                                                |
+      testsuite "#{name of testsuite}" do       |   testcase "#{name of testcase}" do
+          options  ...                          |       options ...
+                                                |       purpose ...
+          startup ...                           |       depends_on ...      
+                                                |       
+          testcase "#{name of testcase}"        |       startup ...
+              purpose ...                       |
+              depends_on ...                    |       check "#{name}"
+              run ...                           |           run ...
+                                                |
+          cleanup ...                           |       cleanup ...
+      end                                       |   end
+                                                |
+
+      Internally, implementation of both is the same. On the downside, word testcase now has two different 
+      meanings, so this might be changed in future to avoid confusion (suggestions are welcome).
 
 2) a) It is sometimes necessary to corellate lines in log with messages in Directory Server log. Timestamps are therefore a must.
    b) Since logging methods are defined globally, tester does not have to bother with timestamps, formatting etc. Also,

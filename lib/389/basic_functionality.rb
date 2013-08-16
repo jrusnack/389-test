@@ -105,7 +105,7 @@ class DirectoryServer < LdapServer
         File.open(config_file, "w+") {|file| file.write(config)}
 
         sh "sudo setup-ds.pl -s -f #{config_file}"
-        
+
         if ! $?.success? then
             raise RuntimeError.new("Failed to create new instance. Return code: #{$?.exitstatus}")
         end

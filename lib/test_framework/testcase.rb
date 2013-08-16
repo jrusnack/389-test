@@ -40,6 +40,10 @@ class Testcase
             @@all_parameters = Array.new
         end
 
+        def self.name
+            @@name
+        end
+
         def self.add_parameters(parameters)
             if parameters.size == 1
                 @@all_parameters.concat(parameters)
@@ -140,7 +144,7 @@ class Testcase
     end
 
     def header
-        output = "\n" + ":"*65 + "\nTESTCASE:   #{@name}"
+        output = "\n" + ":"*65 + "\nNAME:       #{@name}"
         output << "\nPURPOSE:    #{@purpose}" if @purpose
         output << "\nPARAMETERS: #{@parameters}" if @parameters
         output << "\n" + ":"*65

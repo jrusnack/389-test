@@ -2,10 +2,18 @@
 How to set up in Jenkins
 ========================
 
-Prerequisite to running in Jenkins is haveing Git plugin installed, which allows
+Prerequisite to running in Jenkins is having Git plugin installed, which allows
 to check out the latest version of tests.
 
-Creating a new job is easy:
+Prerequisites
+-------------
+
+* tests must run under user with sudo rights
+* commented out "Defaults requiretty" in visudo
+
+Creating a new job
+------------------
+
 * Choose a job name and select Build a free-style software project
 * Under Source Code Management, choose Git and paste repository URL, in this case
     

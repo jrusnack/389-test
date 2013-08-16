@@ -24,8 +24,26 @@
 require "test_framework/dsl"
 require "389/directory_server"
 
-testsuite "replication-bugzillas" do
+# The behaviour of modrdn for a tombstone entry is very inconsistent. Modrdn
+# has two options: deleteoldrdn and newsuperior and the result is different
+# for different combinations:
+#
+# deleteoldrdn: 1 NO newsuperior: ==> err=53 (unwilling to perform)
+# deleteoldrdn: 1 newsuperior: <dn> ==> err=53 (unwilling to perform)
+# deleteoldrdn: 0 NO newsuperior ==> err=1 (operations error)
+# deleteoldrdn: 0 newsuperior: <dn> ==> CRASH
+#
+# The crash has the side effect, that the entry is no longer accessable after
+# restart, an attempt to repeat the operation gives err=32 (no such object)
+#
+# Fix Description: client modrdns and modifies on tombstone entries should not be
+# accepted. Tombstones aer internally kept for eventual conflict resolution, normal
+# clients should not touch them.
+
+testcase "bug974719" do
     options :parallelizable => :true
+    purpose 'rhds90 crash on tombstone modrdn'
+    depends_on 'bug:974719'
 
     startup do
         @master = DirectoryServer.get_instance(@log)
@@ -34,38 +52,9 @@ testsuite "replication-bugzillas" do
         @master.enable_supplier('dc=example,dc=com', 1)
     end
 
-    before_upgrade do
-        @master = DirectoryServer.get_instance(@log)
-        @master.add_replication_manager
-        @master.enable_changelog
-        @master.enable_supplier('dc=example,dc=com', 1)
-        @master.stop
-    end
-
-    after_upgrade do
-        @master.start
-    end
-
-    # The behaviour of modrdn for a tombstone entry is very inconsistent. Modrdn 
-    # has two options: deleteoldrdn and newsuperior and the result is different 
-    # for different combinations:
-    #
-    # deleteoldrdn: 1 NO newsuperior: ==> err=53 (unwilling to perform)
-    # deleteoldrdn: 1 newsuperior: <dn> ==> err=53 (unwilling to perform)
-    # deleteoldrdn: 0 NO newsuperior ==> err=1 (operations error)
-    # deleteoldrdn: 0 newsuperior: <dn> ==> CRASH
-    #
-    # The crash has the side effect, that the entry is no longer accessable after 
-    # restart, an attempt to repeat the operation gives err=32 (no such object)
-    #
-    # Fix Description:   client modrdns and modifies on tombstone entries should not be
-    # accepted. Tombstones aer internally kept for eventual conflict resolution, normal
-    # clients should not touch them.
-    testcase 'bug974719'
-        purpose 'rhds90 crash on tombstone modrdn'
-        depends_on 'bug:974719'
-        with 'tuser1', nil,                 1, 53
-        with 'tuser2', nil,                 0, 53
+    check '01'
+        with 'tuser1', nil, 1, 53
+        with 'tuser2', nil, 0, 53
         with 'tuser3', 'dc=example,dc=com', 1, 53
         with 'tuser4', 'dc=example,dc=com', 0, 53
 

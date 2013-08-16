@@ -72,6 +72,7 @@ class ReportBuilder
         total_skipped = @environment.skipped_count
         total_tests = @environment.testcase_count
         @testsuites.each do |testsuite|
+            next if testsuite.passed_count + testsuite.failed_count + testsuite.skipped_count != testsuite.testcase_count
             report << sprintf(format, testsuite.name, testsuite.passed_count, 
             testsuite.passed_percent.to_s[0..4], testsuite.failed_count, testsuite.failed_percent.to_s[0..4], 
             testsuite.skipped_count, testsuite.skipped_percent.to_s[0..4])

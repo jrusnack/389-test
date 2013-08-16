@@ -24,9 +24,8 @@
 require "test_framework/dsl"
 require "389/directory_server"
 
-testsuite "replication-2master"
+testsuite "replication-2master" do
     options :parallelizable => :true
-    testcases do
 
     startup do
         @master1 = DirectoryServer.get_instance(@log)

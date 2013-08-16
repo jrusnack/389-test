@@ -32,8 +32,9 @@ class Controller
         @configuration = configuration
         @testsuites = Array.new
 
-        # create output directory
+        # create output directory if it doesnt exist already
         FileUtils.mkdir_p(@configuration.output_directory)
+        FileUtils.rm_r Dir.glob(@configuration.output_directory + "/*")
 
         # fill the testsuites array with Testsuites according to configuration
         @testsuites_paths = TestsuiteExplorer.get_testsuites_paths(@configuration)
@@ -153,14 +154,19 @@ class Controller
 
     private
 
-    def add_testsuite(testsuite)
-        require testsuite
-        output_file = @configuration.output_directory + "/#{Testsuite::Builder.name}"
-        @testsuites << Testsuite::Builder.get_testsuite(Log.new(output_file), @configuration)
-    end
-
-    def plaintext_summary_report
-        report = "Results:\n#{"-"}"
+    def add_testsuite(testsuite_path)
+        require testsuite_path
+        relative_path = testsuite_path.gsub(@configuration.test_directory,'')
+        output_file = @configuration.output_directory + relative_path.gsub('.rb','')
+        testsuite = Testsuite::Builder.get_testsuite(Log.new(output_file), @configuration)
+        # if names of testsuites to run are specified, add only those
+        if @configuration.testsuites_to_run
+            if @configuration.testsuites_to_run.include?(testsuite.name) || testsuite.name == "environment"
+                @testsuites << testsuite
+            end
+        else
+            @testsuites << testsuite
+        end
     end
 
     def run_testsuites_sequentially

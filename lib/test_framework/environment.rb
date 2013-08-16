@@ -24,8 +24,7 @@
 require "test_framework/dsl"
 require "util/yum"
 
-testsuite "environment" 
-    testcases do
+testsuite "environment" do
 
     # Prepares machine for running the tests
     startup do

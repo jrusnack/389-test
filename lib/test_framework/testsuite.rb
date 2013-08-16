@@ -34,40 +34,38 @@ class Testsuite
     include OS
     include Ldap
     attr_accessor :duration
-    attr_reader :name, :passed_count, :failed_count, :skipped_count, :options
+    attr_reader :name, :passed_count, :failed_count, :skipped_count
+
+    TESTCASE="Testcase"
+    TESTSUITE="Testsuite"
 
     class Builder
-        @@name = nil
-        @@options = nil
 
-        def self.name=(name)
+        def self.new(name, type, block)
             @@name = name
-        end
-
-        def self.options=(options)
-            @@options = options
-        end
-
-        def self.testcases(&block)
             @@block = block
+            @@type = type
         end
 
         def self.name
-            @@name
+            return @@name
         end
 
         def self.get_testsuite(log, configuration)
-            testsuite = Testsuite.new(@@name, log, @@options, configuration)
+            testsuite = Testsuite.new(@@name, log, @@type, configuration)
             # Probably the ugliest thing ..
-            testsuite.instance_eval(&@@block)
+            testsuite.instance_eval(&@@block) if @@block
             return testsuite
         end
     end
 
-    def initialize(name, log, options, configuration)
+    def initialize(name, log, type, configuration)
         @name = name
         @log = log
-        @options = options
+        @type = type
+        @options = nil
+        @purpose = nil
+        @dependencies = nil
         @configuration = configuration
         @testcases = Array.new
         @startup = nil
@@ -78,8 +76,8 @@ class Testsuite
     end
 
     def execute
-        log(testsuite_header)
         if @configuration.upgrade then
+            return if @before_upgrade == nil || @after_upgrade == nil
             # before_upgrade and after_upgrade already executed, instead of startup
             execute_testcases
             execute_cleanup
@@ -88,10 +86,11 @@ class Testsuite
             execute_testcases
             execute_cleanup
         end
-        log(testsuite_footer)
     end
 
     def execute_startup
+        @log.create_logdir
+        log(testsuite_header)
         if @startup != nil
             timer = Timer.new.start
             run_testcase(@startup)
@@ -100,6 +99,8 @@ class Testsuite
     end
 
     def execute_before_upgrade
+        @log.create_logdir
+        log(testsuite_header)
         if @before_upgrade != nil
             timer = Timer.new.start
             run_testcase(@before_upgrade)
@@ -117,6 +118,7 @@ class Testsuite
 
     def execute_testcases
         # skip all if startup failed
+        #if @startup && @startup.result == Testcase::FAIL
         if @startup.result == Testcase::FAIL
             @skipped_count += @testcases.size
             return
@@ -133,6 +135,7 @@ class Testsuite
             run_testcase(@cleanup)
             @cleanup.duration = timer.get_time
         end
+        log(testsuite_footer)
     end
 
     def run_testcase(testcase)
@@ -249,10 +252,14 @@ class Testsuite
         return @skipped_count*100/Float(testcase_count)
     end
 
+    def get_options
+        return @options
+    end
+
     private
 
     def testsuite_header
-        "#"*20 + " Testsuite #{@name} " + "#"*20
+        "#"*20 + " #{@type} #{@name} " + "#"*20
     end
 
     def testsuite_footer
@@ -299,11 +306,23 @@ class Testsuite
     end
 
     def depends_on(*dependencies)
-        Testcase::Builder.add_dependencies(dependencies)
+        if Testcase::Builder.name == nil
+            @dependencies = dependencies
+        else
+            Testcase::Builder.add_dependencies(dependencies)
+        end
     end
 
     def run(&block)
         @testcases.concat(Testcase::Builder.create_testcases(&block))
+    end
+
+    def check(testcase_name)
+        Testcase::Builder.new(testcase_name, @name)
+    end
+
+    def options(options)
+        @options = options
     end
 
     def cleanup(&block)

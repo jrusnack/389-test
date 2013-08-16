@@ -21,6 +21,8 @@
 #
 # Jan Rusnacko <rusnackoj@gmail.com>
 
+require 'fileutils'
+
 # Mix-in to classes that have defined class variable @log
 # adds two methods: log and log_error
 module LogMixin
@@ -43,6 +45,11 @@ class Log
         @logfile = logfile
     end
 
+    def create_logdir
+        # create whole path to logfile if it doesn`t exit already
+        FileUtils.mkdir_p(@logfile.gsub(/\/[^\/]*$/,''))        
+    end
+
     def info(message, tag)
         return if message == nil
         message = message.to_s if ! message.kind_of?(String)
@@ -51,7 +58,7 @@ class Log
         # add prefix and tag in front of each line
         output = message.lines.to_a.map!{|line| line = prefix + tag + line}.join("")
         output = output.chomp + "\n"
-        # write to @logfile if it exists
+        # write to @logfile
         File.open(@logfile,'a') do |logfile|
             logfile.write(output)
         end if @logfile
