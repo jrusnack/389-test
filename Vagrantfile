@@ -66,10 +66,21 @@ Vagrant.configure("2") do |config|
   # #               Managed by Puppet.\n"
   # # }
   #
-  config.vm.provision :puppet do |puppet|
-     puppet.manifests_path = "puppet/manifests"
-     puppet.manifest_file  = "init.pp"
-     puppet.module_path    = "puppet/modules"
+  # config.vm.provision :puppet do |puppet|
+  #    puppet.manifests_path = "puppet/manifests"
+  #    puppet.manifest_file  = "init.pp"
+  #    puppet.module_path    = "puppet/modules"
+  # end
+
+## For masterless, mount your salt file root
+  config.vm.synced_folder "salt/roots/", "/srv/salt/"
+
+  ## Use all the defaults:
+  config.vm.provision :salt do |salt|
+
+    salt.minion_config = "salt/minion"
+    salt.run_highstate = true
+
   end
 
   # Enable provisioning with chef solo, specifying a cookbooks path, roles
