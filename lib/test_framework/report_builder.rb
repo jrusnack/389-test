@@ -70,16 +70,16 @@ class ReportBuilder
         total_passed = @environment.passed_count
         total_failed = @environment.failed_count
         total_skipped = @environment.skipped_count
-        total_tests = @environment.testcase_count
+        total_tests = @environment.testcases_count
         @testsuites.each do |testsuite|
-            next if testsuite.passed_count + testsuite.failed_count + testsuite.skipped_count != testsuite.testcase_count
+            next if testsuite.executed? == false
             report << sprintf(format, testsuite.name, testsuite.passed_count, 
             testsuite.passed_percent.to_s[0..4], testsuite.failed_count, testsuite.failed_percent.to_s[0..4], 
             testsuite.skipped_count, testsuite.skipped_percent.to_s[0..4])
             total_passed += testsuite.passed_count
             total_failed += testsuite.failed_count
             total_skipped += testsuite.skipped_count
-            total_tests += testsuite.testcase_count
+            total_tests += testsuite.testcases_count
         end
         report << "-"*(57 + longest_name) << "\n"
         report << sprintf(format, "Total", total_passed, (total_passed*100/Float(total_tests)).to_s[0..4], 

@@ -73,9 +73,12 @@ class Testsuite
         @passed_count = 0
         @failed_count = 0
         @skipped_count = 0
+        @logs_initialized = false
+        @executed = false
     end
 
     def execute
+        @executed = true
         if @configuration.upgrade then
             return if @before_upgrade == nil || @after_upgrade == nil
             # before_upgrade and after_upgrade already executed, instead of startup
@@ -89,8 +92,7 @@ class Testsuite
     end
 
     def execute_startup
-        @log.create_logdir
-        log(testsuite_header)
+        init_logging
         if @startup != nil
             timer = Timer.new.start
             run_testcase(@startup)
@@ -99,8 +101,7 @@ class Testsuite
     end
 
     def execute_before_upgrade
-        @log.create_logdir
-        log(testsuite_header)
+        init_logging
         if @before_upgrade != nil
             timer = Timer.new.start
             run_testcase(@before_upgrade)
@@ -214,12 +215,12 @@ class Testsuite
             testcases_serialized[testcase.unique_name] = testcase.store_results
         end
         testcases_serialized[@cleanup.name] = @cleanup.store_results
-        return Marshal.dump([testcases_serialized, @passed_count, @failed_count, @skipped_count, @duration])
+        return Marshal.dump([testcases_serialized, @passed_count, @failed_count, @skipped_count, @duration, @executed])
     end
 
     def load_results(string)
         # Reload values of passed, failed and skipped
-        testcases_serialized, @passed_count, @failed_count, @skipped_count, @duration = Marshal.load(string)
+        testcases_serialized, @passed_count, @failed_count, @skipped_count, @duration, @executed = Marshal.load(string)
         # Reload results of all testcases
         @startup.load_results(testcases_serialized[@startup.name])
         @testcases.each do |testcase|
@@ -228,28 +229,30 @@ class Testsuite
         @cleanup.load_results(testcases_serialized[@cleanup.name])
     end
 
-    def testcase_count
+    def executed?
+        return @executed
+    end
+
+    def testcases_count
         count = @testcases.size
-        if @configuration.upgrade then
-            count += 1 if @before_upgrade
-            count += 1 if @after_upgrade
-        else
-            count += 1 if @startup
-        end
-        count += 1 if @cleanup
+        count += 1 if @before_upgrade && @before_upgrade.executed?
+        count += 1 if @after_upgrade && @after_upgrade.executed?
+        count += 1 if @startup && @startup.executed?
+        count += 1 if @cleanup && @cleanup.executed?
         return count
     end
 
     def passed_percent
-        return @passed_count*100/Float(testcase_count)
+        puts "Passed count is #{@passed_count}"
+        return @passed_count*100/Float(testcases_count)
     end
 
     def failed_percent
-        return @failed_count*100/Float(testcase_count)
+        return @failed_count*100/Float(testcases_count)
     end
 
     def skipped_percent
-        return @skipped_count*100/Float(testcase_count)
+        return @skipped_count*100/Float(testcases_count)
     end
 
     def get_options
@@ -257,6 +260,14 @@ class Testsuite
     end
 
     private
+
+    def init_logging
+        if @logs_initialized == false
+            @log.create_logdir
+            log(testsuite_header)
+            @logs_initialized = true
+        end
+    end
 
     def testsuite_header
         "#"*20 + " #{@type} #{@name} " + "#"*20

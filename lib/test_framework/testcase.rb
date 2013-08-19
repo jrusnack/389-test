@@ -84,11 +84,13 @@ class Testcase
         @error = nil
         @result = UNKNOWN
         @duration = nil
+        @executed = false
     end
 
     # Executes the associated code, which will run within the context of caller,
     # not testcase.
     def execute
+        @executed = true
         @parameters ? @code.call(@parameters) : @code.call
     end
 
@@ -136,11 +138,11 @@ class Testcase
     end
 
     def store_results
-        return Marshal.dump([@output, @error, @result, @duration])
+        return Marshal.dump([@output, @error, @result, @duration, @executed])
     end
 
     def load_results(string)
-        @output, @error, @result, @duration = Marshal.load(string)
+        @output, @error, @result, @duration, @executed = Marshal.load(string)
     end
 
     def header
@@ -156,5 +158,9 @@ class Testcase
 
     def unique_name
         @parameters ? "#{@name}-#{@parameters.inspect}" : "#{name}"
+    end
+
+    def executed?
+        return @executed
     end
 end
