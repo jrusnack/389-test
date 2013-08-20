@@ -80,7 +80,11 @@ class Testsuite
     def execute
         @executed = true
         if @configuration.upgrade then
-            return if @before_upgrade == nil || @after_upgrade == nil
+            if @before_upgrade == nil || @after_upgrade == nil
+                log "Missing before_upgrade or after_upgrade methods - skipping execution."
+                @skipped_count += @testcases.size
+                return
+            end
             # before_upgrade and after_upgrade already executed, instead of startup
             execute_testcases
             execute_cleanup

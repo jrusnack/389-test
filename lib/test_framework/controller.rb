@@ -36,10 +36,20 @@ class Controller
         FileUtils.mkdir_p(@configuration.output_directory)
         FileUtils.rm_r Dir.glob(@configuration.output_directory + "/*")
 
-        # fill the testsuites array with Testsuites according to configuration
+        # fill the testsuites array with all testsuites that can be found
         @testsuites_paths = TestsuiteExplorer.get_testsuites_paths(@configuration)
         @testsuites_paths.each do |testsuite_path|
-            add_testsuite(testsuite_path)
+            @testsuites << create_testsuite(testsuite_path)
+        end
+        # filter only those that should be run according to the @configurations.testsuites_to_run
+        filter_testsuites(@testsuites)
+        # issue warning if testsuite specified in @configurations.testsuites_to_run is not 
+        # present in @testsuites array (probably mistyped name)
+        @configuration.testsuites_to_run.each do |ts_to_run_name|
+            ts_to_run_found = @testsuites.reduce(false) do |found, ts|
+                true if ts.name == ts_to_run_name
+            end
+            puts "Warning: testsuite #{ts_to_run_name} not found." if ts_to_run_found != true
         end
     end
 
@@ -154,24 +164,23 @@ class Controller
 
     private
 
-    def add_testsuite(testsuite_path)
+    def create_testsuite(testsuite_path)
         require testsuite_path
         relative_path = testsuite_path.gsub(@configuration.test_directory,'')
         output_file = @configuration.output_directory + relative_path.gsub('.rb','')
         testsuite = Testsuite::Builder.get_testsuite(Log.new(output_file), @configuration)
-        # if names of testsuites to run are specified, add only those
-        if @configuration.testsuites_to_run
-            if @configuration.testsuites_to_run.include?(testsuite.name) || testsuite.name == "environment"
-                @testsuites << testsuite
-            end
-        else
-            @testsuites << testsuite
+        return testsuite
+    end
+
+    def filter_testsuites(arr_of_testsuites)
+        arr_of_testsuites.delete_if do |ts|
+            (! @configuration.testsuites_to_run.include?(ts.name)) && ts.name != "environment"
         end
     end
 
     def run_testsuites_sequentially
-        @testsuites.each do |testsuite|
-            testsuite.execute
+        @testsuites.each do |ts|
+            ts.execute
         end
     end
 
