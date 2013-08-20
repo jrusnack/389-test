@@ -243,7 +243,6 @@ class Testsuite
     end
 
     def passed_percent
-        puts "Passed count is #{@passed_count}"
         return @passed_count*100/Float(testcases_count)
     end
 

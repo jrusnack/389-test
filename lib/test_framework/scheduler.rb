@@ -43,17 +43,14 @@ class Scheduler
     end
 
     def run
-        @number_of_cpus = number_of_cpus
-        # First execute parallelizable testsuites
-        until @parallel_testsuites.empty? do
-            schedule
-            sleep 1
+        number_of_cpus.times do
+            schedule_new
         end
-        # wait until all spawned child processes finish
-        Process.waitall
-        # necessary to get results from Processes we waited for
-        schedule
-
+        until @pid_to_testsuite.empty?
+            pid = Process.wait
+            cleanup_finished(pid)
+            schedule_new
+        end
         # Execute non-parallelizable testsuites in sequence
         @sequential_testsuites.each do |testsuite|
             testsuite.execute
@@ -62,9 +59,8 @@ class Scheduler
 
     private
 
-    def schedule
-        # If we can run another testsuite, then run it
-        if @pid_to_testsuite.size < @number_of_cpus && ! @parallel_testsuites.empty? then
+    def schedule_new
+        if ! @parallel_testsuites.empty? then
             testsuite_to_run = @parallel_testsuites.pop
             shared_file = get_tmp_file
             @testsuite_to_shared_file[testsuite_to_run.name] = shared_file
@@ -75,13 +71,14 @@ class Scheduler
             end
             @pid_to_testsuite[pid] = testsuite_to_run
         end
+    end
 
-        # If some process/testsuite has finished, get the results
-        @pid_to_testsuite.each do |pid, testsuite|
-            if ! is_process_alive?(pid)
-                File.open(@testsuite_to_shared_file[testsuite.name],'r+') {|file| testsuite.load_results(file.read)}
-            end
+    def cleanup_finished(pid)
+        if ! is_process_alive?(pid)
+            testsuite = @pid_to_testsuite[pid]
+            File.open(@testsuite_to_shared_file[testsuite.name],'r+') {|file| testsuite.load_results(file.read)}
+            @pid_to_testsuite.delete(pid)
+            File.delete(@testsuite_to_shared_file[testsuite.name])
         end
-        @pid_to_testsuite.delete_if{|pid, testsuite| ! is_process_alive?(pid) }
     end
 end
