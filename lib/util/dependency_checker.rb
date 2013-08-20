@@ -30,6 +30,7 @@ module DependencyChecker
         type, number = dep.split(':')
         case type
         when 'bug'
+            puts "Bugzilla status is #{self.get_bugzilla_status(number)}, FIXED STATUS is #{BUGZILLA_FIXED_STATUS}"
             return true if BUGZILLA_FIXED_STATUS.include?(self.get_bugzilla_status(number))
         else
             raise RuntimeError.new("Unkown dependency type #{type}. Input was #{dep}")

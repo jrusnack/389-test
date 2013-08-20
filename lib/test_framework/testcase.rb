@@ -100,6 +100,7 @@ class Testcase
         @dependencies.each do |dep|
             result = false unless DependencyChecker.met_dependency?(dep)
         end
+        puts "Dependency check for #{@name} returns #{result}"
         return result
     end
 
