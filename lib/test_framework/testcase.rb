@@ -25,7 +25,7 @@ require 'util/dependency_checker'
 
 class Testcase
     attr_reader :name
-    attr_accessor  :output, :result, :error, :duration
+    attr_accessor  :output, :result, :error, :duration, :executed
 
     UNKNOWN = "UNKNOWN"
     PASS    = "PASS"
@@ -154,6 +154,18 @@ class Testcase
 
     def footer
         return "RESULT: #{@result}"
+    end
+
+    def passed?
+        return @result == PASS && @executed ? true : false
+    end
+
+    def failed?
+        return @result == FAIL && @executed ? true : false
+    end
+
+    def skipped?
+        return @result == UNKNOWN && @executed ? true : false
     end
 
     def unique_name

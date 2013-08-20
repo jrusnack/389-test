@@ -34,7 +34,7 @@ class Testsuite
     include OS
     include Ldap
     attr_accessor :duration
-    attr_reader :name, :passed_count, :failed_count, :skipped_count
+    attr_reader :name
 
     TESTCASE="Testcase"
     TESTSUITE="Testsuite"
@@ -70,19 +70,22 @@ class Testsuite
         @testcases = Array.new
         @startup = nil
         @cleanup = nil
-        @passed_count = 0
-        @failed_count = 0
-        @skipped_count = 0
         @logs_initialized = false
         @executed = false
     end
 
     def execute
+        init_logging
         @executed = true
+        if check_dependencies == false
+            @testcases.each do |tc|
+                tc.executed = true
+            end
+            return
+        end
         if @configuration.upgrade then
             if @before_upgrade == nil || @after_upgrade == nil
                 log "Missing before_upgrade or after_upgrade methods - skipping execution."
-                @skipped_count += @testcases.size
                 return
             end
             # before_upgrade and after_upgrade already executed, instead of startup
@@ -98,6 +101,11 @@ class Testsuite
     def execute_startup
         init_logging
         if @startup != nil
+            if check_dependencies == false
+                @startup.executed = true
+                return
+            end
+            @startup.result = Testcase::PASS    # Passes by default
             timer = Timer.new.start
             run_testcase(@startup)
             @startup.duration = timer.get_time
@@ -107,6 +115,10 @@ class Testsuite
     def execute_before_upgrade
         init_logging
         if @before_upgrade != nil
+            if check_dependencies == false
+                @before_upgrade.executed = true
+                return
+            end
             timer = Timer.new.start
             run_testcase(@before_upgrade)
             @before_upgrade.duration = timer.get_time
@@ -115,6 +127,10 @@ class Testsuite
 
     def execute_after_upgrade
         if @after_upgrade != nil
+            if check_dependencies == false
+                @after_upgrade.executed = true
+                return
+            end
             timer = Timer.new.start
             run_testcase(@after_upgrade)
             @after_upgrade.duration = timer.get_time
@@ -123,9 +139,7 @@ class Testsuite
 
     def execute_testcases
         # skip all if startup failed
-        #if @startup && @startup.result == Testcase::FAIL
         if @startup.result == Testcase::FAIL
-            @skipped_count += @testcases.size
             return
         end
 
@@ -136,6 +150,7 @@ class Testsuite
 
     def execute_cleanup
         if @cleanup != nil
+            @cleanup.result = Testcase::PASS    # Passes by default
             timer = Timer.new.start
             run_testcase(@cleanup)
             @cleanup.duration = timer.get_time
@@ -144,31 +159,30 @@ class Testsuite
     end
 
     def run_testcase(testcase)
-        if testcase.met_dependencies? == false then
-            @skipped_count += 1
-            return
-        end
         timer = Timer.new.start
         begin
             @log.testcase = testcase
             log(testcase.header)
+            if testcase.met_dependencies? == false
+                log "Warning: testcase has unmet dependencies."
+                testcase.executed = true
+                return
+            end
             testcase.execute
             # if no exception was raised, testcase passed
             testcase.result = Testcase::PASS
-            @passed_count += 1
             log(testcase.footer)
             @log.testcase = nil
             return true
         rescue RuntimeError, Failure => error
             log_error(error)
             if @configuration.debug_mode
-                log("[DEBUG] Aborting execution - detected failure.")
+                log"[DEBUG] Aborting execution - detected failure."
                 puts "Aborted"
                 exit
             end
             testcase.result = Testcase::FAIL
             testcase.error = error
-            @failed_count += 1
             log(testcase.footer)
             return false
         ensure
@@ -179,35 +193,31 @@ class Testsuite
     def to_xml
         testsuite_xml = REXML::Element.new("testsuite")
         testsuite_xml.add(REXML::Element.new("name").add_text(@name))
-        # If testcase has a duration set, it was executed and should be included
-        testsuite_xml.add(@startup.to_xml) if @startup && @startup.duration
-        testsuite_xml.add(@before_upgrade.to_xml) if @before_upgrade && @before_upgrade.duration
-        testsuite_xml.add(@after_upgrade.to_xml) if @after_upgrade && @after_upgrade.duration
+        testsuite_xml.add(@startup.to_xml) if @startup && @startup.executed?
+        testsuite_xml.add(@before_upgrade.to_xml) if @before_upgrade && @before_upgrade.executed?
+        testsuite_xml.add(@after_upgrade.to_xml) if @after_upgrade && @after_upgrade.executed?
         @testcases.each do |testcase|
             testsuite_xml.add(testcase.to_xml)
         end
-        testsuite_xml.add(@cleanup.to_xml) if @cleanup && @cleanup.duration
+        testsuite_xml.add(@cleanup.to_xml) if @cleanup && @cleanup.executed?
         return testsuite_xml
     end
 
     def to_junit_xml
-        number_of_tests = @testcases.size
-        number_of_tests += 1 if @startup
-        number_of_tests += 1 if @cleanup
         testsuite_xml = REXML::Element.new("testsuite")
         testsuite_xml.add_attribute('name', @name)
         testsuite_xml.add_attribute('time', duration)
-        testsuite_xml.add_attribute('tests', number_of_tests)
-        testsuite_xml.add_attribute('passed', @passed_count)
-        testsuite_xml.add_attribute('failed', @failed_count)
-        testsuite_xml.add_attribute('skipped', @skipped_count)
-        testsuite_xml.add(@startup.to_junit_xml) if @startup && @startup.duration
-        testsuite_xml.add(@before_upgrade.to_junit_xml) if @before_upgrade && @before_upgrade.duration
-        testsuite_xml.add(@after_upgrade.to_junit_xml) if @after_upgrade && @after_upgrade.duration
+        testsuite_xml.add_attribute('tests', total_exec_testcases_count)
+        testsuite_xml.add_attribute('passed', passed_count)
+        testsuite_xml.add_attribute('failed', failed_count)
+        testsuite_xml.add_attribute('skipped', skipped_count)
+        testsuite_xml.add(@startup.to_junit_xml) if @startup && @startup.executed?
+        testsuite_xml.add(@before_upgrade.to_junit_xml) if @before_upgrade && @before_upgrade.executed?
+        testsuite_xml.add(@after_upgrade.to_junit_xml) if @after_upgrade && @after_upgrade.executed?
         @testcases.each do |testcase|
             testsuite_xml.add(testcase.to_junit_xml)
         end
-        testsuite_xml.add(@cleanup.to_junit_xml) if @cleanup && @cleanup.duration
+        testsuite_xml.add(@cleanup.to_junit_xml) if @cleanup && @cleanup.executed?
         return testsuite_xml
     end
 
@@ -237,25 +247,36 @@ class Testsuite
         return @executed
     end
 
-    def testcases_count
-        count = @testcases.size
-        count += 1 if @before_upgrade && @before_upgrade.executed?
-        count += 1 if @after_upgrade && @after_upgrade.executed?
-        count += 1 if @startup && @startup.executed?
-        count += 1 if @cleanup && @cleanup.executed?
-        return count
+    def total_exec_testcases_count
+        recount_globals if @total_exec_testcases_count == nil
+        return @total_exec_testcases_count
+    end
+
+    def passed_count
+        recount_globals if @passed_count == nil
+        return @passed_count
+    end
+
+    def failed_count
+        recount_globals if @failed_count == nil
+        return @failed_count
+    end
+
+    def skipped_count
+        recount_globals if @skipped_count == nil
+        return @skipped_count
     end
 
     def passed_percent
-        return @passed_count*100/Float(testcases_count)
+        return passed_count*100/Float(total_exec_testcases_count)
     end
 
     def failed_percent
-        return @failed_count*100/Float(testcases_count)
+        return failed_count*100/Float(total_exec_testcases_count)
     end
 
     def skipped_percent
-        return @skipped_count*100/Float(testcases_count)
+        return skipped_count*100/Float(total_exec_testcases_count)
     end
 
     def get_options
@@ -264,12 +285,62 @@ class Testsuite
 
     private
 
+    def recount_globals
+        @passed_count = 0
+        @passed_count += 1 if @startup && @startup.passed?
+        @passed_count += 1 if @before_upgrade && @before_upgrade.passed?
+        @passed_count += 1 if @after_upgrade && @after_upgrade.passed?
+        @passed_count += 1 if @cleanup && @cleanup.passed?
+        @testcases.each do |tc|
+            @passed_count += 1 if tc.passed?
+        end
+
+        @failed_count = 0
+        @failed_count += 1 if @startup && @startup.failed?
+        @failed_count += 1 if @before_upgrade && @before_upgrade.failed?
+        @failed_count += 1 if @after_upgrade && @after_upgrade.failed?
+        @failed_count += 1 if @cleanup && @cleanup.failed?
+        @testcases.each do |tc|
+            @failed_count += 1 if tc.failed?
+        end
+
+        @skipped_count = 0
+        @skipped_count += 1 if @startup && @startup.skipped?
+        @skipped_count += 1 if @before_upgrade && @before_upgrade.skipped?
+        @skipped_count += 1 if @after_upgrade && @after_upgrade.skipped?
+        @skipped_count += 1 if @cleanup && @cleanup.skipped?
+        @testcases.each do |tc|
+            @skipped_count += 1 if tc.skipped?
+        end
+
+        @total_exec_testcases_count = 0
+        @testcases.each do |tc|
+            @total_exec_testcases_count += 1 if tc.executed?
+        end
+        @total_exec_testcases_count += 1 if @before_upgrade && @before_upgrade.executed?
+        @total_exec_testcases_count += 1 if @after_upgrade && @after_upgrade.executed?
+        @total_exec_testcases_count += 1 if @startup && @startup.executed?
+        @total_exec_testcases_count += 1 if @cleanup && @cleanup.executed?
+    end
+
     def init_logging
         if @logs_initialized == false
             @log.create_logdir
             log(testsuite_header)
             @logs_initialized = true
         end
+    end
+
+    def check_dependencies
+        return true if @dependencies == nil
+        result = true
+        @dependencies.each do |dep|
+            if ! DependencyChecker.met_dependency?(dep)
+                log "Warning: dependency #{dep} not met."
+                result = false
+            end
+        end
+        return result
     end
 
     def testsuite_header
@@ -293,7 +364,6 @@ class Testsuite
 
     def startup(&block)
         @startup = Testcase.new("startup", @name, nil, nil, nil, &block)
-        @startup.result = Testcase::PASS    # Passes by default
     end
 
     def before_upgrade(&block)
@@ -308,6 +378,7 @@ class Testsuite
         if testcase_name == "startup" || testcase_name == "cleanup"
             raise ArgumentError.new("Invalid testcase name #{name}")
         end
+        @testcase_definition_section = true
         Testcase::Builder.new(testcase_name, @name)
     end
 
@@ -320,10 +391,10 @@ class Testsuite
     end
 
     def depends_on(*dependencies)
-        if Testcase::Builder.name == nil
-            @dependencies = dependencies
-        else
+        if @testcase_definition_section
             Testcase::Builder.add_dependencies(dependencies)
+        else
+            @dependencies = dependencies
         end
     end
 
@@ -341,7 +412,6 @@ class Testsuite
 
     def cleanup(&block)
         @cleanup = Testcase.new("cleanup", @name, nil, nil, nil, &block)
-        @cleanup.result = Testcase::PASS    # Passes by default
     end
 
     ###########################

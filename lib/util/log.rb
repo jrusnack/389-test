@@ -47,7 +47,7 @@ class Log
 
     def create_logdir
         # create whole path to logfile if it doesn`t exit already
-        FileUtils.mkdir_p(@logfile.gsub(/\/[^\/]*$/,''))        
+        FileUtils.mkdir_p(@logfile.gsub(/\/[^\/]*$/,''))
     end
 
     def info(message, tag)

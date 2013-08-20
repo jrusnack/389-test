@@ -45,11 +45,14 @@ class Controller
         filter_testsuites(@testsuites)
         # issue warning if testsuite specified in @configurations.testsuites_to_run is not 
         # present in @testsuites array (probably mistyped name)
-        @configuration.testsuites_to_run.each do |ts_to_run_name|
-            ts_to_run_found = @testsuites.reduce(false) do |found, ts|
-                true if ts.name == ts_to_run_name
+        if @configuration.testsuites_to_run
+            @configuration.testsuites_to_run.each do |ts_to_run_name|
+                ts_to_run_found = false
+                @testsuites.each do |ts|
+                    ts_to_run_found = true if ts.name == ts_to_run_name
+                end
+                puts "Warning: testsuite #{ts_to_run_name} not found." if ts_to_run_found != true
             end
-            puts "Warning: testsuite #{ts_to_run_name} not found." if ts_to_run_found != true
         end
     end
 
@@ -173,6 +176,7 @@ class Controller
     end
 
     def filter_testsuites(arr_of_testsuites)
+        return if @configuration.testsuites_to_run == nil
         arr_of_testsuites.delete_if do |ts|
             (! @configuration.testsuites_to_run.include?(ts.name)) && ts.name != "environment"
         end

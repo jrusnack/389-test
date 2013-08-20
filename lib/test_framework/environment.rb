@@ -50,4 +50,8 @@ testsuite "environment" do
             assert("Directory Server rpm should be installed.", `rpm -qa` =~ /389-ds-base-[0-9]/)
         end
 
+    cleanup do
+        log Yum.remove('389-ds-base-libs')
+    end
+
 end
