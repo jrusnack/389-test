@@ -32,6 +32,7 @@ require 'util/log'
 # DS implementation.
 require '389/basic_functionality'
 require '389/replication'
+require '389/configuration'
 
 class DirectoryServer < LdapServer
     # include LogMixin to add log() and log_error() methods to DirectoryServer
